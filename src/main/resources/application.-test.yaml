@@ -1,0 +1,8 @@
+k8watch:
+  informer:
+    config:
+      test1:
+        resLabels:
+          label1: label2
+        nsLabels:
+          name: foo
