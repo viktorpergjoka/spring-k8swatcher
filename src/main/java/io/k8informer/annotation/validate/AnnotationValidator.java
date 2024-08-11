@@ -18,6 +18,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 @Component
 @Slf4j
@@ -34,30 +37,30 @@ public class AnnotationValidator {
     }
 
     @PostConstruct
-    public void init(){
+    public void init() {
         informerBeansMap = ctx.getBeansWithAnnotation(Informer.class);
     }
 
-    public void validateInformerAnnotations(){
+    public void validateInformerAnnotations() {
         for (Object bean : informerBeansMap.values()) {
             Class<?> beanClass = bean.getClass();
             Informer informer = beanClass.getAnnotation(Informer.class);
             KubernetesClient client = clients.getClient(informer.clientName());
-            if (client == null){
+            if (client == null) {
                 throw new RuntimeException("Could not find Kubernetes client for " + informer.clientName());
             }
         }
     }
 
-    public void validateWatchAnnotations(){
+    public void validateWatchAnnotations() {
         for (Object bean : informerBeansMap.values()) {
             Class<?> beanClass = bean.getClass();
             Method[] methods = beanClass.getMethods();
             List<Method> k8watchMethods = Arrays.stream(methods).filter(method -> method.isAnnotationPresent(Watch.class)).toList();
             if (k8watchMethods.isEmpty()) {
-                log.warn("No @Watch annotated methods found for class {}", beanClass.getName());
+                log.warn("No @Watch annotated methods found in class {}", beanClass.getName());
             }
-            for(Method method : k8watchMethods){
+            for (Method method : k8watchMethods) {
                 Watch watch = method.getAnnotation(Watch.class);
                 Class<? extends KubernetesResource> resource = watch.resource();
                 EventType event = watch.event();
@@ -71,7 +74,7 @@ public class AnnotationValidator {
         }
     }
 
-    private void checkAddParams(Method method, Class<? extends KubernetesResource> type){
+    private void checkAddParams(Method method, Class<? extends KubernetesResource> type) {
         Class<?>[] parameterTypes = method.getParameterTypes();
         if (parameterTypes.length != 1) {
             throw new MalformedParametersException("Invalid number of parameters for method " + method.getName() + " . Expected 1, got " + parameterTypes.length);
@@ -80,7 +83,7 @@ public class AnnotationValidator {
         checkIsAssignableFrom(parameterType, type);
     }
 
-    private void checkUpdateParams(Method method, Class<? extends KubernetesResource> type){
+    private void checkUpdateParams(Method method, Class<? extends KubernetesResource> type) {
         Class<?>[] parameterTypes = method.getParameterTypes();
         if (parameterTypes.length != 2) {
             throw new MalformedParametersException("Invalid number of parameters for method " + method.getName() + " . Expected 2, got " + parameterTypes.length);
@@ -91,7 +94,7 @@ public class AnnotationValidator {
         checkIsAssignableFrom(secondParam, type);
     }
 
-    private void checkDeleteParams(Method method, Class<? extends KubernetesResource> type){
+    private void checkDeleteParams(Method method, Class<? extends KubernetesResource> type) {
         Class<?>[] parameterTypes = method.getParameterTypes();
         if (parameterTypes.length < 2 || parameterTypes.length > 3) {
             throw new MalformedParametersException("Invalid number of parameters for method " + method.getName());
@@ -100,15 +103,31 @@ public class AnnotationValidator {
         Class<?> secondParam = parameterTypes[1];
         checkIsAssignableFrom(firstParam, type);
 
-        if (!secondParam.getTypeName().equals("boolean") && !secondParam.getTypeName().equals("java.lang.Boolean")){
+        if (!secondParam.getTypeName().equals("boolean") && !secondParam.getTypeName().equals("java.lang.Boolean")) {
             throw new MalformedParametersException(secondParam.getTypeName() + " is not boolean");
         }
     }
 
-    private void checkIsAssignableFrom(Class<?> param, Class<? extends KubernetesResource> type){
-        if (!param.isAssignableFrom(type)){
+    private void checkIsAssignableFrom(Class<?> param, Class<? extends KubernetesResource> type) {
+        if (!param.isAssignableFrom(type)) {
             throw new MalformedParametersException(param.getTypeName() + " is not assignable from " + type.getTypeName());
         }
+    }
+
+    public void validateLabels(Informer informer, Class<?> beanClass) {
+        BiConsumer<String[], String> validateLabel = (String[] labels, String name) -> {
+            if (labels == null || labels.length == 0) {
+                throw new MalformedParametersException("No " + name + " provided for Informer " + beanClass.getName());
+            }
+            Arrays.asList(labels).forEach(label -> {
+                String[] splittedLabel = label.split("=");
+                if (splittedLabel.length != 2) {
+                    throw new MalformedParametersException("Invalid label for " + label + ". Format has to be key=value");
+                }
+            });
+        };
+        validateLabel.accept(informer.nsLabels(), "nsLabels (namespace labels)");
+        validateLabel.accept(informer.resLabels(), "resLabels (resource labels)");
     }
 
 }

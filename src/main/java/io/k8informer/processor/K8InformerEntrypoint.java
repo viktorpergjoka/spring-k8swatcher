@@ -1,8 +1,11 @@
 package io.k8informer.processor;
 
+import io.fabric8.kubernetes.client.KubernetesClient;
 import io.k8informer.annotation.Informer;
-import io.k8informer.annotation.InformerConfigurationProperty;
+import io.k8informer.annotation.cfg.InformerConfiguration;
+import io.k8informer.annotation.cfg.InformerConfigurationProperty;
 import io.k8informer.annotation.Watch;
+import io.k8informer.annotation.cfg.InformerContext;
 import io.k8informer.annotation.validate.AnnotationValidator;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,8 +15,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.Method;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @AllArgsConstructor
@@ -23,39 +26,31 @@ public class K8InformerEntrypoint {
     private ApplicationContext ctx;
     private InformerConfigurationProperty cfg;
     private AnnotationValidator validator;
+    private KubeClientFactory kubeClientFactory;
 
     @EventListener
     public void onStartUp(ApplicationReadyEvent event) {
-        /*
-        Map<String, Object> informerBeansMap = ctx.getBeansWithAnnotation(Informer.class);
-        for (Map.Entry<String, Object> beanName : informerBeansMap.entrySet()) {
-            Object bean = beanName.getValue();
-            Class<?> beanClass = bean.getClass();
-            Method[] methods = beanClass.getMethods();
-            List<Method> k8watchMethods = Arrays.stream(methods).filter(method -> method.isAnnotationPresent(K8Watch.class)).toList();
-            if (k8watchMethods.isEmpty()) {
-                log.warn("No K8Watch annotated methods found for class {}", beanClass.getName());
-            }
-        }*/
-
-        validator.validateInformerAnnotations();
-        validator.validateWatchAnnotations();
+        validateAnnotations();
 
         Map<String, Object> informerBeansMap = ctx.getBeansWithAnnotation(Informer.class);
-        for (Map.Entry<String, Object> entry : informerBeansMap.entrySet()) {
-            String beanName = entry.getKey();
-            Class<?> beanClass = AopUtils.getTargetClass(ctx.getBean(beanName));
-            for (Method method : beanClass.getMethods()) {
-                if (method.isAnnotationPresent(Watch.class)) {
-                    Watch annotation = method.getAnnotation(Watch.class);
-                    Informer informer = beanClass.getAnnotation(Informer.class);
+        List<InformerContext> informers = informerBeansMap.values().stream()
+                .filter(bean -> Arrays.stream(AopUtils.getTargetClass(bean).getMethods()).anyMatch(method -> method.isAnnotationPresent(Watch.class)))
+                .map(bean -> {
+                    Informer informer = AopUtils.getTargetClass(bean).getAnnotation(Informer.class);
+                    Map<String, InformerConfiguration> configurationMap = cfg.getConfig();
+                    InformerConfiguration informerConfiguration = configurationMap.getOrDefault(informer.name(), configurationMap.get("default"));
 
+                    KubernetesClient client = kubeClientFactory.getClient(informer.clientName());
 
-                }
-            }
+                    if (informerConfiguration == null) {
+                        validator.validateLabels(informer, bean.getClass());
+                        Map<String, String> nsLabels = Arrays.stream(informer.nsLabels()).collect(Collectors.toMap(item -> item.split("=")[0], item -> item.split("=")[1]));
+                        Map<String, String> resLabels = Arrays.stream(informer.resLabels()).collect(Collectors.toMap(item -> item.split("=")[0], item -> item.split("=")[1]));
+                        informerConfiguration = new InformerConfiguration(nsLabels, resLabels, informer.resyncPeriod());
+                    }
+                    return new InformerContext(informer, informerConfiguration, client);
+                }).toList();
 
-
-        }
 
         /*
         for(String beanName: ctx.getBeanDefinitionNames()){
@@ -106,5 +101,10 @@ public class K8InformerEntrypoint {
             }
         }
             */
+    }
+
+    private void validateAnnotations(){
+        validator.validateInformerAnnotations();
+        validator.validateWatchAnnotations();
     }
 }

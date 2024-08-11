@@ -31,7 +31,7 @@ public class KubeClientFactory {
     }
 
     public KubernetesClient getClient(String name){
-        return clients.get(name);
+        return clients.getOrDefault(name, clients.get("default"));
     }
 
     @PreDestroy

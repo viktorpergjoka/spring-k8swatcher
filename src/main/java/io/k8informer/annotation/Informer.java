@@ -8,7 +8,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Component
 @Documented
-public @interface  Informer {
+public @interface Informer {
 
     String name() default "default";
     String clientName() default "default";

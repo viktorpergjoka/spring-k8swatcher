@@ -1,6 +1,9 @@
-package io.k8informer.annotation;
+package io.k8informer.annotation.cfg;
 
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
@@ -12,13 +15,7 @@ import java.util.Map;
 @Data
 public class InformerConfigurationProperty {
 
+    @Setter(AccessLevel.NONE)
     private Map<String, InformerConfiguration> config = new HashMap<>();
 
-    @Data
-    static private class InformerConfiguration {
-
-        private Map<String, String> nsLabels = new HashMap<>();
-        private Map<String, String> resLabels = new HashMap<>();
-        private long resyncPeriod = 1000L;
-    }
 }
