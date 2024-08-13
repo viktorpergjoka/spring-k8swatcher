@@ -49,6 +49,7 @@ public class AnnotationValidator {
             if (client == null) {
                 throw new RuntimeException("Could not find Kubernetes client for " + informer.clientName());
             }
+            validateLabels(informer, beanClass);
         }
     }
 
@@ -117,14 +118,16 @@ public class AnnotationValidator {
     public void validateLabels(Informer informer, Class<?> beanClass) {
         BiConsumer<String[], String> validateLabel = (String[] labels, String name) -> {
             if (labels == null || labels.length == 0) {
-                throw new MalformedParametersException("No " + name + " provided for Informer " + beanClass.getName());
+                log.warn("{} are not provided for class {}. If not specified any labels will be used.", name, beanClass.getName());
             }
-            Arrays.asList(labels).forEach(label -> {
-                String[] splittedLabel = label.split("=");
-                if (splittedLabel.length != 2) {
-                    throw new MalformedParametersException("Invalid label for " + label + ". Format has to be key=value");
-                }
-            });
+            else{
+                Arrays.asList(labels).forEach(label -> {
+                    String[] splittedLabel = label.split("=");
+                    if (splittedLabel.length != 2) {
+                        throw new MalformedParametersException("Invalid label for " + label + "in class " + beanClass.getName() + ". Format has to be key=value");
+                    }
+                });
+            }
         };
         validateLabel.accept(informer.nsLabels(), "nsLabels (namespace labels)");
         validateLabel.accept(informer.resLabels(), "resLabels (resource labels)");

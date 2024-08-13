@@ -1,6 +1,14 @@
 package io.k8informer.processor;
 
+import io.fabric8.kubernetes.api.model.*;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
+import io.fabric8.kubernetes.client.dsl.NamespaceListVisitFromServerGetDeleteRecreateWaitApplicable;
+import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
+import io.fabric8.kubernetes.client.dsl.Resource;
+import io.fabric8.kubernetes.client.informers.ResourceEventHandler;
+import io.fabric8.kubernetes.client.informers.SharedIndexInformer;
+import io.k8informer.annotation.EventType;
 import io.k8informer.annotation.Informer;
 import io.k8informer.annotation.cfg.InformerConfiguration;
 import io.k8informer.annotation.cfg.InformerConfigurationProperty;
@@ -14,7 +22,9 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ReflectionUtils;
 
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -33,7 +43,7 @@ public class K8InformerEntrypoint {
         validateAnnotations();
 
         Map<String, Object> informerBeansMap = ctx.getBeansWithAnnotation(Informer.class);
-        List<InformerContext> informers = informerBeansMap.values().stream()
+        List<InformerContext> informerContextList = informerBeansMap.values().stream()
                 .filter(bean -> Arrays.stream(AopUtils.getTargetClass(bean).getMethods()).anyMatch(method -> method.isAnnotationPresent(Watch.class)))
                 .map(bean -> {
                     Informer informer = AopUtils.getTargetClass(bean).getAnnotation(Informer.class);
@@ -43,64 +53,77 @@ public class K8InformerEntrypoint {
                     KubernetesClient client = kubeClientFactory.getClient(informer.clientName());
 
                     if (informerConfiguration == null) {
-                        validator.validateLabels(informer, bean.getClass());
                         Map<String, String> nsLabels = Arrays.stream(informer.nsLabels()).collect(Collectors.toMap(item -> item.split("=")[0], item -> item.split("=")[1]));
                         Map<String, String> resLabels = Arrays.stream(informer.resLabels()).collect(Collectors.toMap(item -> item.split("=")[0], item -> item.split("=")[1]));
                         informerConfiguration = new InformerConfiguration(nsLabels, resLabels, informer.resyncPeriod());
                     }
-                    return new InformerContext(informer, informerConfiguration, client);
+                    return new InformerContext(bean.getClass(), informer, informerConfiguration, client);
                 }).toList();
 
+        informerContextList.forEach(context -> {
+            Class<?> beanClass = context.getBeanClass();
+            Method[] methods = beanClass.getMethods();
+            List<Method> k8watchMethods = Arrays.stream(methods).filter(method -> method.isAnnotationPresent(Watch.class)).toList();
 
-        /*
-        for(String beanName: ctx.getBeanDefinitionNames()){
-            Class<?> clazz = AopUtils.getTargetClass(ctx.getBean(beanName));
-            Method[] methods = clazz.getDeclaredMethods();
+            Informer informer = context.getInformer();
+            InformerConfiguration informerConfiguration = context.getCfg();
+            KubernetesClient client = context.getClient();
 
-            for(Method m: methods){
-                if(m.isAnnotationPresent(K8Watch.class)){
-                    K8Watch annotation = m.getAnnotation(K8Watch.class);
-                    Class resource = annotation.resource();
-                    String[] namespaces = annotation.namespaces();
+            Map<String, String> nsLabels = informerConfiguration.getNsLabels();
+            Map<String, String> resLabels = informerConfiguration.getResLabels();
 
-                    System.out.println(cfg);
+            if (!nsLabels.isEmpty()){
+                k8watchMethods.forEach(watchMethod -> {
+                    Class resource = watchMethod.getAnnotation(Watch.class).resource();
+                    List<Namespace> namespaces = client.namespaces().withLabels(nsLabels).list().getItems();
+                    namespaces.stream()
+                            .map(ns -> ns.getMetadata().getName())
+                            .forEach(nsName -> {
+                                NonNamespaceOperation r = (NonNamespaceOperation) client.resources(resource).inNamespace(nsName);
+                                SharedIndexInformer sharedIndexInformer = ((FilterWatchListDeletable) r.withLabels(resLabels)).inform();
+                                sharedIndexInformer.addEventHandler(new ResourceEventHandler() {
 
+                                    @Override
+                                    public void onAdd(Object obj) {
+                                        if (watchMethod.getAnnotation(Watch.class).event().equals(EventType.ADD)) {
+                                            try {
+                                                Object instance = beanClass.getDeclaredConstructor().newInstance();
+                                                ReflectionUtils.invokeMethod(watchMethod, instance, obj);
+                                            } catch (Exception e) {
+                                                throw new RuntimeException(e);
+                                            }
+                                        }
+                                    }
 
-                    KubernetesClient client = new KubernetesClientBuilder().build();
+                                    @Override
+                                    public void onUpdate(Object oldObj, Object newObj) {
+                                        if (watchMethod.getAnnotation(Watch.class).event().equals(EventType.UPDATE)) {
+                                            try {
+                                                Object instance = beanClass.getDeclaredConstructor().newInstance();
+                                                ReflectionUtils.invokeMethod(watchMethod, instance, oldObj, newObj);
+                                            } catch (Exception e) {
+                                                throw new RuntimeException(e);
+                                            }
+                                        }
+                                    }
 
-                    NonNamespaceOperation r = (NonNamespaceOperation) client.resources(resource).inNamespace(namespaces[0]);
-
-                    SharedIndexInformer f = ((FilterWatchListDeletable)r.withLabel("app", "http-echo")).inform();
-                    //FilterWatchListDeletable<Pod, KubernetesResourceList<Pod>, Resource<Pod>> q = client.resources(Pod.class).inNamespace("").withLabel("", "");
-
-
-
-                    SharedIndexInformer inform = f.addEventHandler(new ResourceEventHandler() {
-                        @Override
-                        public void onAdd(Object obj) {
-                            try {
-                                Object instance = clazz.getDeclaredConstructor().newInstance();
-                                ReflectionUtils.invokeMethod(m, instance, obj);
-                            } catch (Exception e) {
-                                throw new RuntimeException(e);
-                            }
-                        }
-
-                        @Override
-                        public void onUpdate(Object oldObj, Object newObj) {
-
-                        }
-
-                        @Override
-                        public void onDelete(Object obj, boolean deletedFinalStateUnknown) {
-
-                        }
-                    });
-                    inform.start();
-                }
+                                    @Override
+                                    public void onDelete(Object obj, boolean deletedFinalStateUnknown) {
+                                        if (watchMethod.getAnnotation(Watch.class).event().equals(EventType.DELETE)) {
+                                            try {
+                                                Object instance = beanClass.getDeclaredConstructor().newInstance();
+                                                ReflectionUtils.invokeMethod(watchMethod, instance, obj);
+                                            } catch (Exception e) {
+                                                throw new RuntimeException(e);
+                                            }
+                                        }
+                                    }
+                                });
+                                sharedIndexInformer.start();
+                            });
+                });
             }
-        }
-            */
+        });
     }
 
     private void validateAnnotations(){
