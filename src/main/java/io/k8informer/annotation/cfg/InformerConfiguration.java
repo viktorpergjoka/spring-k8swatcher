@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -12,7 +13,7 @@ import java.util.Map;
 @NoArgsConstructor
 public class InformerConfiguration {
 
-    private Map<String, String> nsLabels = new HashMap<>();
+    private Map<String, List<String>> nsLabels = new HashMap<>();
     private Map<String, String> resLabels = new HashMap<>();
     private long resyncPeriod = 1000L;
 }

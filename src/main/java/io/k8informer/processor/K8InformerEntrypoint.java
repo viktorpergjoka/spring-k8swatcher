@@ -26,6 +26,7 @@ import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
@@ -53,8 +54,9 @@ public class K8InformerEntrypoint {
                     KubernetesClient client = kubeClientFactory.getClient(informer.clientName());
 
                     if (informerConfiguration == null) {
-                        Map<String, String> nsLabels = Arrays.stream(informer.nsLabels()).collect(Collectors.toMap(item -> item.split("=")[0], item -> item.split("=")[1]));
-                        Map<String, String> resLabels = Arrays.stream(informer.resLabels()).collect(Collectors.toMap(item -> item.split("=")[0], item -> item.split("=")[1]));
+                        Map<String, List<String>> nsLabels = Arrays.stream(informer.nsLabels())
+                                .collect(Collectors.groupingBy(item -> item.split("=")[0], Collectors.mapping(item -> item.split("=")[1], Collectors.toList())));
+                        Map<String, String> resLabels = Arrays.stream(informer.resLabels()).collect(Collectors.toMap(item -> item.split("=")[0], item -> item.split("=")[1], (a, b) -> a.split("=")[0]));
                         informerConfiguration = new InformerConfiguration(nsLabels, resLabels, informer.resyncPeriod());
                     }
                     return new InformerContext(bean.getClass(), informer, informerConfiguration, client);
@@ -69,58 +71,66 @@ public class K8InformerEntrypoint {
             InformerConfiguration informerConfiguration = context.getCfg();
             KubernetesClient client = context.getClient();
 
-            Map<String, String> nsLabels = informerConfiguration.getNsLabels();
+            Map<String, List<String>> nsLabels = informerConfiguration.getNsLabels();
             Map<String, String> resLabels = informerConfiguration.getResLabels();
 
             if (!nsLabels.isEmpty()){
                 k8watchMethods.forEach(watchMethod -> {
                     Class resource = watchMethod.getAnnotation(Watch.class).resource();
-                    List<Namespace> namespaces = client.namespaces().withLabels(nsLabels).list().getItems();
-                    namespaces.stream()
-                            .map(ns -> ns.getMetadata().getName())
-                            .forEach(nsName -> {
-                                NonNamespaceOperation r = (NonNamespaceOperation) client.resources(resource).inNamespace(nsName);
-                                SharedIndexInformer sharedIndexInformer = ((FilterWatchListDeletable) r.withLabels(resLabels)).inform();
-                                sharedIndexInformer.addEventHandler(new ResourceEventHandler() {
 
-                                    @Override
-                                    public void onAdd(Object obj) {
-                                        if (watchMethod.getAnnotation(Watch.class).event().equals(EventType.ADD)) {
-                                            try {
-                                                Object instance = beanClass.getDeclaredConstructor().newInstance();
-                                                ReflectionUtils.invokeMethod(watchMethod, instance, obj);
-                                            } catch (Exception e) {
-                                                throw new RuntimeException(e);
-                                            }
-                                        }
-                                    }
+                    nsLabels.keySet().forEach(key -> {
+                        List<String> nsListValue = nsLabels.get(key);
+                        nsListValue.forEach(nsvalue -> {
+                            Map<String, String> label = Map.of(key, nsvalue);
+                            List<Namespace> namespaces = client.namespaces().withLabels(label).list().getItems();
+                            namespaces.stream()
+                                    .map(ns -> ns.getMetadata().getName())
+                                    .forEach(nsName -> {
+                                        NonNamespaceOperation r = (NonNamespaceOperation) client.resources(resource).inNamespace(nsName);
+                                        SharedIndexInformer sharedIndexInformer = ((FilterWatchListDeletable) r.withLabels(resLabels)).inform();
+                                        sharedIndexInformer.addEventHandler(new ResourceEventHandler() {
 
-                                    @Override
-                                    public void onUpdate(Object oldObj, Object newObj) {
-                                        if (watchMethod.getAnnotation(Watch.class).event().equals(EventType.UPDATE)) {
-                                            try {
-                                                Object instance = beanClass.getDeclaredConstructor().newInstance();
-                                                ReflectionUtils.invokeMethod(watchMethod, instance, oldObj, newObj);
-                                            } catch (Exception e) {
-                                                throw new RuntimeException(e);
+                                            @Override
+                                            public void onAdd(Object obj) {
+                                                if (watchMethod.getAnnotation(Watch.class).event().equals(EventType.ADD)) {
+                                                    try {
+                                                        Object instance = beanClass.getDeclaredConstructor().newInstance();
+                                                        ReflectionUtils.invokeMethod(watchMethod, instance, obj);
+                                                    } catch (Exception e) {
+                                                        throw new RuntimeException(e);
+                                                    }
+                                                }
                                             }
-                                        }
-                                    }
 
-                                    @Override
-                                    public void onDelete(Object obj, boolean deletedFinalStateUnknown) {
-                                        if (watchMethod.getAnnotation(Watch.class).event().equals(EventType.DELETE)) {
-                                            try {
-                                                Object instance = beanClass.getDeclaredConstructor().newInstance();
-                                                ReflectionUtils.invokeMethod(watchMethod, instance, obj, deletedFinalStateUnknown);
-                                            } catch (Exception e) {
-                                                throw new RuntimeException(e);
+                                            @Override
+                                            public void onUpdate(Object oldObj, Object newObj) {
+                                                if (watchMethod.getAnnotation(Watch.class).event().equals(EventType.UPDATE)) {
+                                                    try {
+                                                        Object instance = beanClass.getDeclaredConstructor().newInstance();
+                                                        ReflectionUtils.invokeMethod(watchMethod, instance, oldObj, newObj);
+                                                    } catch (Exception e) {
+                                                        throw new RuntimeException(e);
+                                                    }
+                                                }
                                             }
-                                        }
-                                    }
-                                });
-                                sharedIndexInformer.start();
-                            });
+
+                                            @Override
+                                            public void onDelete(Object obj, boolean deletedFinalStateUnknown) {
+                                                if (watchMethod.getAnnotation(Watch.class).event().equals(EventType.DELETE)) {
+                                                    try {
+                                                        Object instance = beanClass.getDeclaredConstructor().newInstance();
+                                                        ReflectionUtils.invokeMethod(watchMethod, instance, obj, deletedFinalStateUnknown);
+                                                    } catch (Exception e) {
+                                                        throw new RuntimeException(e);
+                                                    }
+                                                }
+                                            }
+                                        });
+                                        sharedIndexInformer.start();
+                                    });
+                        });
+                    });
+
                 });
             }
         });
