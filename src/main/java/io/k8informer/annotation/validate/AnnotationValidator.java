@@ -67,51 +67,51 @@ public class AnnotationValidator {
                 EventType event = watch.event();
 
                 switch (event) {
-                    case ADD -> checkAddParams(method, resource);
-                    case UPDATE -> checkUpdateParams(method, resource);
-                    case DELETE -> checkDeleteParams(method, resource);
+                    case ADD -> checkAddParams(beanClass, method, resource);
+                    case UPDATE -> checkUpdateParams(beanClass, method, resource);
+                    case DELETE -> checkDeleteParams(beanClass, method, resource);
                 }
             }
         }
     }
 
-    private void checkAddParams(Method method, Class<? extends KubernetesResource> type) {
+    private void checkAddParams(Class<?> beanClass, Method method, Class<? extends KubernetesResource> type) {
         Class<?>[] parameterTypes = method.getParameterTypes();
         if (parameterTypes.length != 1) {
             throw new MalformedParametersException("Invalid number of parameters for method " + method.getName() + " . Expected 1, got " + parameterTypes.length);
         }
         Class<?> parameterType = parameterTypes[0];
-        checkIsAssignableFrom(parameterType, type);
+        checkIsAssignableFrom(beanClass, method, parameterType, type);
     }
 
-    private void checkUpdateParams(Method method, Class<? extends KubernetesResource> type) {
+    private void checkUpdateParams(Class<?> beanClass, Method method, Class<? extends KubernetesResource> type) {
         Class<?>[] parameterTypes = method.getParameterTypes();
         if (parameterTypes.length != 2) {
             throw new MalformedParametersException("Invalid number of parameters for method " + method.getName() + " . Expected 2, got " + parameterTypes.length);
         }
         Class<?> firstParam = parameterTypes[0];
         Class<?> secondParam = parameterTypes[1];
-        checkIsAssignableFrom(firstParam, type);
-        checkIsAssignableFrom(secondParam, type);
+        checkIsAssignableFrom(beanClass, method, firstParam, type);
+        checkIsAssignableFrom(beanClass, method, secondParam, type);
     }
 
-    private void checkDeleteParams(Method method, Class<? extends KubernetesResource> type) {
+    private void checkDeleteParams(Class<?> beanClass, Method method, Class<? extends KubernetesResource> type) {
         Class<?>[] parameterTypes = method.getParameterTypes();
         if (parameterTypes.length < 2 || parameterTypes.length > 3) {
             throw new MalformedParametersException("Invalid number of parameters for method " + method.getName());
         }
         Class<?> firstParam = parameterTypes[0];
         Class<?> secondParam = parameterTypes[1];
-        checkIsAssignableFrom(firstParam, type);
+        checkIsAssignableFrom(beanClass, method, firstParam, type);
 
         if (!secondParam.getTypeName().equals("boolean") && !secondParam.getTypeName().equals("java.lang.Boolean")) {
             throw new MalformedParametersException(secondParam.getTypeName() + " is not boolean");
         }
     }
 
-    private void checkIsAssignableFrom(Class<?> param, Class<? extends KubernetesResource> type) {
+    private void checkIsAssignableFrom(Class<?> beanClass, Method method, Class<?> param, Class<? extends KubernetesResource> type) {
         if (!param.isAssignableFrom(type)) {
-            throw new MalformedParametersException(param.getTypeName() + " is not assignable from " + type.getTypeName());
+            throw new MalformedParametersException(param.getTypeName() + " is not assignable from " + type.getTypeName() + " in method " + method.getName() + " in class " + beanClass.getName());
         }
     }
 
@@ -119,8 +119,7 @@ public class AnnotationValidator {
         BiConsumer<String[], String> validateLabel = (String[] labels, String name) -> {
             if (labels == null || labels.length == 0) {
                 log.warn("{} are not provided for class {}. If not specified any labels will be used.", name, beanClass.getName());
-            }
-            else{
+            } else {
                 Arrays.asList(labels).forEach(label -> {
                     String[] splittedLabel = label.split("=");
                     if (splittedLabel.length != 2) {

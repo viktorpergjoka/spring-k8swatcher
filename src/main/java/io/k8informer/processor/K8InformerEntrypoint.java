@@ -112,7 +112,7 @@ public class K8InformerEntrypoint {
                                         if (watchMethod.getAnnotation(Watch.class).event().equals(EventType.DELETE)) {
                                             try {
                                                 Object instance = beanClass.getDeclaredConstructor().newInstance();
-                                                ReflectionUtils.invokeMethod(watchMethod, instance, obj);
+                                                ReflectionUtils.invokeMethod(watchMethod, instance, obj, deletedFinalStateUnknown);
                                             } catch (Exception e) {
                                                 throw new RuntimeException(e);
                                             }
