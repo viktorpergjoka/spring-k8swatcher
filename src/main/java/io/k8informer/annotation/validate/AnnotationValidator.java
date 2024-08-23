@@ -111,7 +111,7 @@ public class AnnotationValidator {
 
     private void checkIsAssignableFrom(Class<?> beanClass, Method method, Class<?> param, Class<? extends KubernetesResource> type) {
         if (!param.isAssignableFrom(type)) {
-            throw new MalformedParametersException(param.getTypeName() + " is not assignable from " + type.getTypeName() + " in method " + method.getName() + " in class " + beanClass.getName());
+            throw new MalformedParametersException(param.getTypeName() + " is not a type or subtype of " + type.getTypeName() + " in method " + method.getName() + " in class " + beanClass.getName());
         }
     }
 
