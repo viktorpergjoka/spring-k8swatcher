@@ -13,6 +13,7 @@ import io.k8informer.annotation.cfg.InformerConfiguration;
 import io.k8informer.annotation.cfg.InformerConfigurationProperty;
 import io.k8informer.annotation.cfg.InformerContext;
 import io.k8informer.annotation.validate.AnnotationValidator;
+import jakarta.annotation.PreDestroy;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.support.AopUtils;
@@ -23,25 +24,31 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
-@AllArgsConstructor
 @Slf4j
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class K8InformerEntrypoint {
 
     private ApplicationContext ctx;
     private InformerConfigurationProperty cfg;
     private AnnotationValidator validator;
     private KubeClientFactory kubeClientFactory;
+    private List<SharedIndexInformer> informerList;
+
+    public K8InformerEntrypoint(ApplicationContext ctx, InformerConfigurationProperty cfg, AnnotationValidator validator, KubeClientFactory kubeClientFactory) {
+        this.ctx = ctx;
+        this.cfg = cfg;
+        this.validator = validator;
+        this.kubeClientFactory = kubeClientFactory;
+        this.informerList = new ArrayList<>();
+    }
+
 
     @EventListener
-    @SuppressWarnings({"rawtypes", "unchecked"})
     public void onStartUp(ApplicationReadyEvent event) {
         validateAnnotations();
 
@@ -58,62 +65,72 @@ public class K8InformerEntrypoint {
             Map<String, List<String>> nsLabels = informerConfiguration.getNsLabels();
             Map<String, List<String>> resLabels = informerConfiguration.getResLabels();
 
-           List<String> namespaces = getNamespaces(client, nsLabels);
+            List<String> namespaces = getNamespaces(client, nsLabels);
 
             k8watchMethods.forEach(watchMethod -> {
                 Class resource = watchMethod.getAnnotation(Watch.class).resource();
-                List<SharedIndexInformer> informerList = namespaces.stream()
+                informerList = namespaces.stream()
                         .map(nsName -> (NonNamespaceOperation) client.resources(resource).inNamespace(nsName))
                         .flatMap(nsOperation -> createSharedIndexInformer(nsOperation, resLabels).stream()).toList();
 
                 informerList.stream()
                         .map(sharedIndexInformer -> {
-                    return sharedIndexInformer.addEventHandler(new ResourceEventHandler() {
-
-                        @Override
-                        public void onAdd(Object obj) {
-                            if (watchMethod.getAnnotation(Watch.class).event().equals(EventType.ADD)) {
-                                try {
-                                    Object instance = ctx.getBean(beanClass);
-                                    ReflectionUtils.invokeMethod(watchMethod, instance, obj);
-                                } catch (Exception e) {
-                                    throw new RuntimeException(e);
-                                }
-                            }
-                        }
-
-                        @Override
-                        public void onUpdate(Object oldObj, Object newObj) {
-                            if (watchMethod.getAnnotation(Watch.class).event().equals(EventType.UPDATE)) {
-                                try {
-                                    Object instance = ctx.getBean(beanClass);
-                                    ReflectionUtils.invokeMethod(watchMethod, instance, oldObj, newObj);
-                                } catch (Exception e) {
-                                    throw new RuntimeException(e);
-                                }
-                            }
-                        }
-
-                        @Override
-                        public void onDelete(Object obj, boolean deletedFinalStateUnknown) {
-                            if (watchMethod.getAnnotation(Watch.class).event().equals(EventType.DELETE)) {
-                                try {
-                                    Object instance = ctx.getBean(beanClass);
-                                    ReflectionUtils.invokeMethod(watchMethod, instance, obj, deletedFinalStateUnknown);
-                                } catch (Exception e) {
-                                    throw new RuntimeException(e);
-                                }
-                            }
-                        }
-                    });
-                }).forEach(SharedIndexInformer::start);
+                            return sharedIndexInformer.addEventHandler(getResourceEventHandler(watchMethod, beanClass));
+                        }).forEach(SharedIndexInformer::start);
             });
         });
     }
 
+    private ResourceEventHandler getResourceEventHandler(Method watchMethod, Class<?> beanClass) {
+        return new ResourceEventHandler() {
+
+            @Override
+            public void onAdd(Object obj) {
+                if (watchMethod.getAnnotation(Watch.class).event().equals(EventType.ADD)) {
+                    try {
+                        Object instance = ctx.getBean(beanClass);
+                        ReflectionUtils.invokeMethod(watchMethod, instance, obj);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+
+            @Override
+            public void onUpdate(Object oldObj, Object newObj) {
+                if (watchMethod.getAnnotation(Watch.class).event().equals(EventType.UPDATE)) {
+                    try {
+                        Object instance = ctx.getBean(beanClass);
+                        ReflectionUtils.invokeMethod(watchMethod, instance, oldObj, newObj);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+
+            @Override
+            public void onDelete(Object obj, boolean deletedFinalStateUnknown) {
+                if (watchMethod.getAnnotation(Watch.class).event().equals(EventType.DELETE)) {
+                    try {
+                        Object instance = ctx.getBean(beanClass);
+                        ReflectionUtils.invokeMethod(watchMethod, instance, obj, deletedFinalStateUnknown);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        };
+    }
+
+    private void validateAnnotations() {
+        validator.validateInformerAnnotations();
+        validator.validateWatchAnnotations();
+    }
+
     private List<String> getNamespaces(KubernetesClient client, Map<String, List<String>> nsLabels) {
+        log.debug("nsLabel={}", nsLabels);
         Function<Namespace, String> namespaceToStringName = namespace -> namespace.getMetadata().getName();
-        if (nsLabels.isEmpty()){
+        if (nsLabels.isEmpty()) {
             return client.namespaces().list().getItems().stream()
                     .map(namespaceToStringName)
                     .toList();
@@ -125,18 +142,13 @@ public class K8InformerEntrypoint {
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private List<SharedIndexInformer> createSharedIndexInformer(NonNamespaceOperation nsOperation,  Map<String, List<String>> resLabels){
-        if (resLabels.isEmpty()){
+    private List<SharedIndexInformer> createSharedIndexInformer(NonNamespaceOperation nsOperation, Map<String, List<String>> resLabels) {
+        log.debug("resLabels={}", resLabels);
+        if (resLabels.isEmpty()) {
             return Collections.singletonList(nsOperation.inform());
         }
         return resLabels.keySet().stream()
                 .map(resKey -> ((FilterWatchListDeletable) nsOperation.withLabelIn(resKey, resLabels.get(resKey).toArray(new String[0]))).inform()).toList();
-    }
-
-
-    private void validateAnnotations() {
-        validator.validateInformerAnnotations();
-        validator.validateWatchAnnotations();
     }
 
     private List<InformerContext> getInformerContextList() {
@@ -159,5 +171,11 @@ public class K8InformerEntrypoint {
                     return new InformerContext(bean.getClass(), informer, informerConfiguration, client);
                 }).toList();
         return informerContextList;
+    }
+
+    @PreDestroy
+    public void shutdown(){
+        log.debug("Stopping informers");
+        informerList.forEach(SharedIndexInformer::stop);
     }
 }

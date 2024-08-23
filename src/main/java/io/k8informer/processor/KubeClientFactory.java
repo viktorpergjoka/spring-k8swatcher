@@ -36,6 +36,7 @@ public class KubeClientFactory {
 
     @PreDestroy
     public void shutdown(){
+        log.debug("Closing Kubernetes clients");
         clients.values().forEach(KubernetesClient::close);
     }
 
