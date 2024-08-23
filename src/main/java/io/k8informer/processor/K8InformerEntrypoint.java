@@ -66,8 +66,9 @@ public class K8InformerEntrypoint {
                         .map(nsName -> (NonNamespaceOperation) client.resources(resource).inNamespace(nsName))
                         .flatMap(nsOperation -> createSharedIndexInformer(nsOperation, resLabels).stream()).toList();
 
-                informerList.forEach(sharedIndexInformer -> {
-                    sharedIndexInformer.addEventHandler(new ResourceEventHandler() {
+                informerList.stream()
+                        .map(sharedIndexInformer -> {
+                    return sharedIndexInformer.addEventHandler(new ResourceEventHandler() {
 
                         @Override
                         public void onAdd(Object obj) {
@@ -105,8 +106,7 @@ public class K8InformerEntrypoint {
                             }
                         }
                     });
-                });
-
+                }).forEach(SharedIndexInformer::start);
             });
         });
     }
