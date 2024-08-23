@@ -118,7 +118,7 @@ public class AnnotationValidator {
     public void validateLabels(Informer informer, Class<?> beanClass) {
         BiConsumer<String[], String> validateLabel = (String[] labels, String name) -> {
             if (labels == null || labels.length == 0) {
-                log.warn("{} are not provided for class {}. If not specified any labels will be used.", name, beanClass.getName());
+                log.warn("{} are not provided for class {}. If not specified all will be used.", name, beanClass.getName());
             } else {
                 Arrays.asList(labels).forEach(label -> {
                     String[] splittedLabel = label.split("=");

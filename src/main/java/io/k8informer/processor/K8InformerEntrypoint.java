@@ -14,7 +14,6 @@ import io.k8informer.annotation.cfg.InformerConfigurationProperty;
 import io.k8informer.annotation.cfg.InformerContext;
 import io.k8informer.annotation.validate.AnnotationValidator;
 import jakarta.annotation.PreDestroy;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -74,52 +73,10 @@ public class K8InformerEntrypoint {
                         .flatMap(nsOperation -> createSharedIndexInformer(nsOperation, resLabels).stream()).toList();
 
                 informerList.stream()
-                        .map(sharedIndexInformer -> {
-                            return sharedIndexInformer.addEventHandler(getResourceEventHandler(watchMethod, beanClass));
-                        }).forEach(SharedIndexInformer::start);
+                        .map(sharedIndexInformer -> sharedIndexInformer.addEventHandler(new IndexInformerResHandler(ctx, watchMethod, beanClass)))
+                        .forEach(SharedIndexInformer::start);
             });
         });
-    }
-
-    private ResourceEventHandler getResourceEventHandler(Method watchMethod, Class<?> beanClass) {
-        return new ResourceEventHandler() {
-
-            @Override
-            public void onAdd(Object obj) {
-                if (watchMethod.getAnnotation(Watch.class).event().equals(EventType.ADD)) {
-                    try {
-                        Object instance = ctx.getBean(beanClass);
-                        ReflectionUtils.invokeMethod(watchMethod, instance, obj);
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            }
-
-            @Override
-            public void onUpdate(Object oldObj, Object newObj) {
-                if (watchMethod.getAnnotation(Watch.class).event().equals(EventType.UPDATE)) {
-                    try {
-                        Object instance = ctx.getBean(beanClass);
-                        ReflectionUtils.invokeMethod(watchMethod, instance, oldObj, newObj);
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            }
-
-            @Override
-            public void onDelete(Object obj, boolean deletedFinalStateUnknown) {
-                if (watchMethod.getAnnotation(Watch.class).event().equals(EventType.DELETE)) {
-                    try {
-                        Object instance = ctx.getBean(beanClass);
-                        ReflectionUtils.invokeMethod(watchMethod, instance, obj, deletedFinalStateUnknown);
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            }
-        };
     }
 
     private void validateAnnotations() {
@@ -141,7 +98,6 @@ public class K8InformerEntrypoint {
                 .toList();
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
     private List<SharedIndexInformer> createSharedIndexInformer(NonNamespaceOperation nsOperation, Map<String, List<String>> resLabels) {
         log.debug("resLabels={}", resLabels);
         if (resLabels.isEmpty()) {
@@ -153,7 +109,7 @@ public class K8InformerEntrypoint {
 
     private List<InformerContext> getInformerContextList() {
         Map<String, Object> informerBeansMap = ctx.getBeansWithAnnotation(Informer.class);
-        List<InformerContext> informerContextList = informerBeansMap.values().stream()
+        return informerBeansMap.values().stream()
                 .filter(bean -> Arrays.stream(AopUtils.getTargetClass(bean).getMethods()).anyMatch(method -> method.isAnnotationPresent(Watch.class)))
                 .map(bean -> {
                     Informer informer = AopUtils.getTargetClass(bean).getAnnotation(Informer.class);
@@ -170,11 +126,10 @@ public class K8InformerEntrypoint {
                     }
                     return new InformerContext(bean.getClass(), informer, informerConfiguration, client);
                 }).toList();
-        return informerContextList;
     }
 
     @PreDestroy
-    public void shutdown(){
+    public void shutdown() {
         log.debug("Stopping informers");
         informerList.forEach(SharedIndexInformer::stop);
     }
