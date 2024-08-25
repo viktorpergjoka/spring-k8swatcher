@@ -4,9 +4,7 @@ import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
-import io.fabric8.kubernetes.client.informers.ResourceEventHandler;
 import io.fabric8.kubernetes.client.informers.SharedIndexInformer;
-import io.k8informer.annotation.EventType;
 import io.k8informer.annotation.Informer;
 import io.k8informer.annotation.Watch;
 import io.k8informer.annotation.cfg.InformerConfiguration;
@@ -20,7 +18,6 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -61,21 +58,24 @@ public class K8InformerEntrypoint {
             InformerConfiguration informerConfiguration = context.getCfg();
             KubernetesClient client = context.getClient();
 
-            Map<String, List<String>> nsLabels = informerConfiguration.getNsLabels();
-            Map<String, List<String>> resLabels = informerConfiguration.getResLabels();
+            Map<String, String> nsLabels = informerConfiguration.getNsLabels();
+            Map<String, String> resLabels = informerConfiguration.getResLabels();
 
             List<String> namespaces = getNamespaces(client, nsLabels);
 
             k8watchMethods.forEach(watchMethod -> {
                 Class resource = watchMethod.getAnnotation(Watch.class).resource();
+
                 informerList = namespaces.stream()
                         .map(nsName -> (NonNamespaceOperation) client.resources(resource).inNamespace(nsName))
-                        .flatMap(nsOperation -> createSharedIndexInformer(nsOperation, resLabels).stream()).toList();
+                        .map(nsOperation -> createSharedIndexInformer(nsOperation, resLabels)).toList();
 
                 informerList.stream()
                         .map(sharedIndexInformer -> sharedIndexInformer.addEventHandler(new IndexInformerResHandler(ctx, watchMethod, beanClass)))
                         .forEach(SharedIndexInformer::start);
             });
+
+
         });
     }
 
@@ -84,7 +84,7 @@ public class K8InformerEntrypoint {
         validator.validateWatchAnnotations();
     }
 
-    private List<String> getNamespaces(KubernetesClient client, Map<String, List<String>> nsLabels) {
+    private List<String> getNamespaces(KubernetesClient client, Map<String, String> nsLabels) {
         log.debug("nsLabel={}", nsLabels);
         Function<Namespace, String> namespaceToStringName = namespace -> namespace.getMetadata().getName();
         if (nsLabels.isEmpty()) {
@@ -92,19 +92,17 @@ public class K8InformerEntrypoint {
                     .map(namespaceToStringName)
                     .toList();
         }
-        return nsLabels.keySet().stream()
-                .flatMap(nsKey -> client.namespaces().withLabelIn(nsKey, nsLabels.get(nsKey).toArray(new String[0])).list().getItems().stream())
-                .map(namespaceToStringName)
-                .toList();
+        return client.namespaces().withLabels(nsLabels).list().getItems()
+                .stream().map(namespaceToStringName).collect(Collectors.toList());
     }
 
-    private List<SharedIndexInformer> createSharedIndexInformer(NonNamespaceOperation nsOperation, Map<String, List<String>> resLabels) {
+    private SharedIndexInformer createSharedIndexInformer(NonNamespaceOperation nsOperation, Map<String, String> resLabels) {
         log.debug("resLabels={}", resLabels);
         if (resLabels.isEmpty()) {
-            return Collections.singletonList(nsOperation.inform());
+            return nsOperation.inform();
         }
-        return resLabels.keySet().stream()
-                .map(resKey -> ((FilterWatchListDeletable) nsOperation.withLabelIn(resKey, resLabels.get(resKey).toArray(new String[0]))).inform()).toList();
+
+        return ((FilterWatchListDeletable) nsOperation.withLabels(resLabels)).inform();
     }
 
     private List<InformerContext> getInformerContextList() {
@@ -119,9 +117,8 @@ public class K8InformerEntrypoint {
                     KubernetesClient client = kubeClientFactory.getClient(informer.clientName());
 
                     if (informerConfiguration == null) {
-                        Map<String, List<String>> nsLabels = Arrays.stream(informer.nsLabels())
-                                .collect(Collectors.groupingBy(item -> item.split("=")[0], Collectors.mapping(item -> item.split("=")[1], Collectors.toList())));
-                        Map<String, List<String>> resLabels = Arrays.stream(informer.resLabels()).collect(Collectors.groupingBy(item -> item.split("=")[0], Collectors.mapping(item -> item.split("=")[1], Collectors.toList())));
+                        Map<String, String> nsLabels = Arrays.stream(informer.nsLabels()).collect(Collectors.toMap(item -> item.split("=")[0], item -> item.split("=")[1]));
+                        Map<String, String> resLabels = Arrays.stream(informer.resLabels()).collect(Collectors.toMap(item -> item.split("=")[0], item -> item.split("=")[1]));
                         informerConfiguration = new InformerConfiguration(nsLabels, resLabels, informer.resyncPeriod());
                     }
                     return new InformerContext(bean.getClass(), informer, informerConfiguration, client);

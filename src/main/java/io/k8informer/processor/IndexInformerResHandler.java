@@ -12,7 +12,7 @@ import java.lang.reflect.Method;
 
 @AllArgsConstructor
 @Slf4j
-@SuppressWarnings({"rawtypes", "unchecked"})
+@SuppressWarnings("rawtypes")
 class IndexInformerResHandler implements ResourceEventHandler {
 
     private ApplicationContext ctx;

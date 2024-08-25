@@ -14,10 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.lang.reflect.MalformedParametersException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -116,6 +113,9 @@ public class AnnotationValidator {
     }
 
     public void validateLabels(Informer informer, Class<?> beanClass) {
+        String[] nsLabels = informer.nsLabels();
+        String[] resLabels = informer.resLabels();
+
         BiConsumer<String[], String> validateLabel = (String[] labels, String name) -> {
             if (labels == null || labels.length == 0) {
                 log.warn("{} are not provided for class {}. If not specified all will be used.", name, beanClass.getName());
@@ -128,8 +128,22 @@ public class AnnotationValidator {
                 });
             }
         };
-        validateLabel.accept(informer.nsLabels(), "nsLabels (namespace labels)");
-        validateLabel.accept(informer.resLabels(), "resLabels (resource labels)");
+        validateLabel.accept(nsLabels, "nsLabels (namespace labels)");
+        validateLabel.accept(resLabels, "resLabels (resource labels)");
+
+        checkForDuplicateKey(nsLabels, beanClass);
+        checkForDuplicateKey(resLabels, beanClass);
+    }
+
+    private void checkForDuplicateKey(String[] labelValues, Class<?> beanClass) {
+        List<String> keys = Arrays.asList(labelValues)
+                .stream()
+                .map(value -> value.split("=")[0])
+                .toList();
+        Set<String> keySet = new HashSet<>(keys);
+        if (keySet.size() < keys.size()) {
+            throw new MalformedParametersException("Duplicate key found in " + beanClass.getName() + ". You cannot define the same key. You defined: " + keys.stream().sorted());
+        }
     }
 
 }
