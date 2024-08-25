@@ -23,8 +23,8 @@ import java.util.function.Function;
 @Slf4j
 public class AnnotationValidator {
 
-    private ApplicationContext ctx;
-    private KubeClientFactory clients;
+    private final ApplicationContext ctx;
+    private final KubeClientFactory clients;
     private Map<String, Object> informerBeansMap;
 
     public AnnotationValidator(ApplicationContext ctx, KubeClientFactory clients) {
@@ -44,9 +44,10 @@ public class AnnotationValidator {
             Informer informer = beanClass.getAnnotation(Informer.class);
             KubernetesClient client = clients.getClient(informer.clientName());
             if (client == null) {
-                throw new RuntimeException("Could not find Kubernetes client for " + informer.clientName());
+                throw new RuntimeException("Could not find Kubernetes a client with name " + informer.clientName());
             }
             validateLabels(informer, beanClass);
+            validateResyncPeriod(informer, beanClass);
         }
     }
 
@@ -142,7 +143,13 @@ public class AnnotationValidator {
                 .toList();
         Set<String> keySet = new HashSet<>(keys);
         if (keySet.size() < keys.size()) {
-            throw new MalformedParametersException("Duplicate key found in " + beanClass.getName() + ". You cannot define the same key. You defined: " + keys.stream().sorted());
+            throw new IllegalArgumentException("Duplicate key found in " + beanClass.getName() + ". You cannot define the same key. You defined the following keys: " + keys.stream().sorted());
+        }
+    }
+
+    private void validateResyncPeriod(Informer informer, Class<?> beanClass){
+        if (informer.resyncPeriod() < 1000 ){
+            throw new IllegalArgumentException("Resync period for class " + beanClass.getName() +  " must be greater than 1000.");
         }
     }
 

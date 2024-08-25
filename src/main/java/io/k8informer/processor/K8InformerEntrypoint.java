@@ -29,10 +29,10 @@ import java.util.stream.Collectors;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class K8InformerEntrypoint {
 
-    private ApplicationContext ctx;
-    private InformerConfigurationProperty cfg;
-    private AnnotationValidator validator;
-    private KubeClientFactory kubeClientFactory;
+    private final ApplicationContext ctx;
+    private final InformerConfigurationProperty cfg;
+    private final AnnotationValidator validator;
+    private final KubeClientFactory kubeClientFactory;
     private List<SharedIndexInformer> informerList;
 
     public K8InformerEntrypoint(ApplicationContext ctx, InformerConfigurationProperty cfg, AnnotationValidator validator, KubeClientFactory kubeClientFactory) {
@@ -53,7 +53,7 @@ public class K8InformerEntrypoint {
         informerContextList.forEach(context -> {
             Class<?> beanClass = context.getBeanClass();
             Method[] methods = beanClass.getMethods();
-            List<Method> k8watchMethods = Arrays.stream(methods).filter(method -> method.isAnnotationPresent(Watch.class)).toList();
+            List<Method> watchMethods = Arrays.stream(methods).filter(method -> method.isAnnotationPresent(Watch.class)).toList();
 
             InformerConfiguration informerConfiguration = context.getCfg();
             KubernetesClient client = context.getClient();
@@ -63,19 +63,18 @@ public class K8InformerEntrypoint {
 
             List<String> namespaces = getNamespaces(client, nsLabels);
 
-            k8watchMethods.forEach(watchMethod -> {
+            watchMethods.forEach(watchMethod -> {
                 Class resource = watchMethod.getAnnotation(Watch.class).resource();
 
                 informerList = namespaces.stream()
                         .map(nsName -> (NonNamespaceOperation) client.resources(resource).inNamespace(nsName))
-                        .map(nsOperation -> createSharedIndexInformer(nsOperation, resLabels)).toList();
+                        .map(nsOperation -> createSharedIndexInformer(nsOperation, resLabels))
+                        .toList();
 
                 informerList.stream()
-                        .map(sharedIndexInformer -> sharedIndexInformer.addEventHandler(new IndexInformerResHandler(ctx, watchMethod, beanClass)))
+                        .map(sharedIndexInformer -> sharedIndexInformer.addEventHandlerWithResyncPeriod(new IndexInformerResHandler(ctx, watchMethod, beanClass), informerConfiguration.getResyncPeriod()))
                         .forEach(SharedIndexInformer::start);
             });
-
-
         });
     }
 
