@@ -1,4 +1,4 @@
-package io.k8informer.processor;
+package io.k8informer.annotation.processor;
 
 import io.fabric8.kubernetes.client.informers.ResourceEventHandler;
 import io.k8informer.annotation.EventType;
@@ -51,8 +51,7 @@ class IndexInformerResHandler implements ResourceEventHandler {
                 if (parameterCount == 1) {
                     ReflectionUtils.invokeMethod(watchMethod, instance, obj);
                 } else {
-                    ReflectionUtils.invokeMethod(
-                            watchMethod, instance, obj, deletedFinalStateUnknown);
+                    ReflectionUtils.invokeMethod(watchMethod, instance, obj, deletedFinalStateUnknown);
                 }
             } catch (Exception e) {
                 throw new RuntimeException(e);

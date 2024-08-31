@@ -1,9 +1,12 @@
+import org.springframework.boot.gradle.plugin.SpringBootPlugin
+
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.3.0'
+    id 'org.springframework.boot' version '3.3.0' apply false
     id 'io.spring.dependency-management' version '1.1.5'
     id 'com.diffplug.spotless' version '7.0.0.BETA2'
 }
+
 
 
 group = 'io.k8watch'
@@ -23,24 +26,32 @@ repositories {
     mavenCentral()
 }
 
+dependencyManagement {
+    imports {
+        mavenBom SpringBootPlugin.BOM_COORDINATES
+    }
+}
+
 dependencies {
 
 
-    //compileOnly 'org.springframework.boot:spring-boot-autoconfigure'
-    //compileOnly 'org.springframework:spring-context-support'
-    //compileOnly 'org.springframework:spring-aspects'
-    compileOnly 'org.projectlombok:lombok'
+    //implementation 'jakarta.annotation:jakarta.annotation-api:3.0.0'
+    //implementation 'org.springframework.boot:spring-boot-autoconfigure'
+    //implementation 'org.springframework:spring-context-support'
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.projectlombok:lombok'
     implementation 'io.fabric8:kubernetes-client:6.13.2'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'com.google.googlejavaformat:google-java-format:1.23.0'
-    //implementation 'org.springframework.boot:spring-boot-starter-aop'
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs.add("-parameters")
 }
 
 apply plugin: "com.diffplug.spotless"
@@ -53,11 +64,11 @@ spotless {
         target '*.gradle', '.gitattributes', '.gitignore'
 
         trimTrailingWhitespace()
-        indentWithTabs()
         endWithNewline()
     }
     java {
-        googleJavaFormat('1.23.0').aosp().reflowLongStrings().skipJavadocFormatting()
         formatAnnotations()
+        removeUnusedImports()
+        palantirJavaFormat()
     }
 }

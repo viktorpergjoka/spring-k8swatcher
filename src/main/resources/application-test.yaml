@@ -1,8 +1,9 @@
 k8watch:
   informer:
     config:
-      test1:
-        resLabels:
-          label1: label2
+      spike:
         nsLabels:
-          name: foo
+          "[kubernetes.io/metadata.name]": foo
+        resLabels:
+          app: spike
+          foo: bar
