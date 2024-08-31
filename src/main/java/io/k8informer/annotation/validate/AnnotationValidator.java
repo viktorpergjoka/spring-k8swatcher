@@ -1,6 +1,5 @@
 package io.k8informer.annotation.validate;
 
-
 import io.fabric8.kubernetes.api.model.KubernetesResource;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.k8informer.annotation.EventType;
@@ -8,16 +7,13 @@ import io.k8informer.annotation.Informer;
 import io.k8informer.annotation.Watch;
 import io.k8informer.processor.KubeClientFactory;
 import jakarta.annotation.PostConstruct;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Component;
-
 import java.lang.reflect.MalformedParametersException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationContext;
+import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
@@ -44,7 +40,8 @@ public class AnnotationValidator {
             Informer informer = beanClass.getAnnotation(Informer.class);
             KubernetesClient client = clients.getClient(informer.clientName());
             if (client == null) {
-                throw new RuntimeException("Could not find Kubernetes a client with name " + informer.clientName());
+                throw new RuntimeException(
+                        "Could not find Kubernetes a client with name " + informer.clientName());
             }
             validateLabels(informer, beanClass);
             validateResyncPeriod(informer, beanClass);
@@ -55,7 +52,10 @@ public class AnnotationValidator {
         for (Object bean : informerBeansMap.values()) {
             Class<?> beanClass = bean.getClass();
             Method[] methods = beanClass.getMethods();
-            List<Method> k8watchMethods = Arrays.stream(methods).filter(method -> method.isAnnotationPresent(Watch.class)).toList();
+            List<Method> k8watchMethods =
+                    Arrays.stream(methods)
+                            .filter(method -> method.isAnnotationPresent(Watch.class))
+                            .toList();
             if (k8watchMethods.isEmpty()) {
                 log.warn("No @Watch annotated methods found in class {}", beanClass.getName());
             }
@@ -73,19 +73,29 @@ public class AnnotationValidator {
         }
     }
 
-    private void checkAddParams(Class<?> beanClass, Method method, Class<? extends KubernetesResource> type) {
+    private void checkAddParams(
+            Class<?> beanClass, Method method, Class<? extends KubernetesResource> type) {
         Class<?>[] parameterTypes = method.getParameterTypes();
         if (parameterTypes.length != 1) {
-            throw new MalformedParametersException("Invalid number of parameters for method " + method.getName() + " . Expected 1, got " + parameterTypes.length);
+            throw new MalformedParametersException(
+                    "Invalid number of parameters for method "
+                            + method.getName()
+                            + " . Expected 1, got "
+                            + parameterTypes.length);
         }
         Class<?> parameterType = parameterTypes[0];
         checkIsAssignableFrom(beanClass, method, parameterType, type);
     }
 
-    private void checkUpdateParams(Class<?> beanClass, Method method, Class<? extends KubernetesResource> type) {
+    private void checkUpdateParams(
+            Class<?> beanClass, Method method, Class<? extends KubernetesResource> type) {
         Class<?>[] parameterTypes = method.getParameterTypes();
         if (parameterTypes.length != 2) {
-            throw new MalformedParametersException("Invalid number of parameters for method " + method.getName() + " . Expected 2, got " + parameterTypes.length);
+            throw new MalformedParametersException(
+                    "Invalid number of parameters for method "
+                            + method.getName()
+                            + " . Expected 2, got "
+                            + parameterTypes.length);
         }
         Class<?> firstParam = parameterTypes[0];
         Class<?> secondParam = parameterTypes[1];
@@ -93,23 +103,41 @@ public class AnnotationValidator {
         checkIsAssignableFrom(beanClass, method, secondParam, type);
     }
 
-    private void checkDeleteParams(Class<?> beanClass, Method method, Class<? extends KubernetesResource> type) {
+    private void checkDeleteParams(
+            Class<?> beanClass, Method method, Class<? extends KubernetesResource> type) {
         Class<?>[] parameterTypes = method.getParameterTypes();
-        if (parameterTypes.length < 2 || parameterTypes.length > 3) {
-            throw new MalformedParametersException("Invalid number of parameters for method " + method.getName());
+        int paramsLength = parameterTypes.length;
+        if (paramsLength < 1 || paramsLength > 2) {
+            throw new MalformedParametersException(
+                    "Invalid number of parameters for method " + method.getName());
         }
         Class<?> firstParam = parameterTypes[0];
-        Class<?> secondParam = parameterTypes[1];
         checkIsAssignableFrom(beanClass, method, firstParam, type);
 
-        if (!secondParam.getTypeName().equals("boolean") && !secondParam.getTypeName().equals("java.lang.Boolean")) {
-            throw new MalformedParametersException(secondParam.getTypeName() + " is not boolean");
+        if (paramsLength == 2) {
+            Class<?> secondParam = parameterTypes[1];
+            if (!secondParam.getTypeName().equals("boolean")
+                    && !secondParam.getTypeName().equals("java.lang.Boolean")) {
+                throw new MalformedParametersException(
+                        secondParam.getTypeName() + " is not boolean");
+            }
         }
     }
 
-    private void checkIsAssignableFrom(Class<?> beanClass, Method method, Class<?> param, Class<? extends KubernetesResource> type) {
+    private void checkIsAssignableFrom(
+            Class<?> beanClass,
+            Method method,
+            Class<?> param,
+            Class<? extends KubernetesResource> type) {
         if (!param.isAssignableFrom(type)) {
-            throw new MalformedParametersException(param.getTypeName() + " is not a type or subtype of " + type.getTypeName() + " in method " + method.getName() + " in class " + beanClass.getName());
+            throw new MalformedParametersException(
+                    param.getTypeName()
+                            + " is not a type or subtype of "
+                            + type.getTypeName()
+                            + " in method "
+                            + method.getName()
+                            + " in class "
+                            + beanClass.getName());
         }
     }
 
@@ -117,18 +145,30 @@ public class AnnotationValidator {
         String[] nsLabels = informer.nsLabels();
         String[] resLabels = informer.resLabels();
 
-        BiConsumer<String[], String> validateLabel = (String[] labels, String name) -> {
-            if (labels == null || labels.length == 0) {
-                log.warn("{} are not provided for class {}. If not specified all will be used.", name, beanClass.getName());
-            } else {
-                Arrays.asList(labels).forEach(label -> {
-                    String[] splittedLabel = label.split("=");
-                    if (splittedLabel.length != 2) {
-                        throw new MalformedParametersException("Invalid label for " + label + "in class " + beanClass.getName() + ". Format has to be key=value");
+        BiConsumer<String[], String> validateLabel =
+                (String[] labels, String name) -> {
+                    if (labels == null || labels.length == 0) {
+                        log.warn(
+                                "{} are not provided for class {}. If not specified all will be"
+                                        + " used.",
+                                name,
+                                beanClass.getName());
+                    } else {
+                        Arrays.asList(labels)
+                                .forEach(
+                                        label -> {
+                                            String[] splittedLabel = label.split("=");
+                                            if (splittedLabel.length != 2) {
+                                                throw new MalformedParametersException(
+                                                        "Invalid label for "
+                                                                + label
+                                                                + "in class "
+                                                                + beanClass.getName()
+                                                                + ". Format has to be key=value");
+                                            }
+                                        });
                     }
-                });
-            }
-        };
+                };
         validateLabel.accept(nsLabels, "nsLabels (namespace labels)");
         validateLabel.accept(resLabels, "resLabels (resource labels)");
 
@@ -137,20 +177,24 @@ public class AnnotationValidator {
     }
 
     private void checkForDuplicateKey(String[] labelValues, Class<?> beanClass) {
-        List<String> keys = Arrays.asList(labelValues)
-                .stream()
-                .map(value -> value.split("=")[0])
-                .toList();
+        List<String> keys =
+                Arrays.asList(labelValues).stream().map(value -> value.split("=")[0]).toList();
         Set<String> keySet = new HashSet<>(keys);
         if (keySet.size() < keys.size()) {
-            throw new IllegalArgumentException("Duplicate key found in " + beanClass.getName() + ". You cannot define the same key. You defined the following keys: " + keys.stream().sorted());
+            throw new IllegalArgumentException(
+                    "Duplicate key found in "
+                            + beanClass.getName()
+                            + ". You cannot define the same key. You defined the following keys: "
+                            + keys.stream().sorted());
         }
     }
 
-    private void validateResyncPeriod(Informer informer, Class<?> beanClass){
-        if (informer.resyncPeriod() < 1000 ){
-            throw new IllegalArgumentException("Resync period for class " + beanClass.getName() +  " must be greater than 1000.");
+    private void validateResyncPeriod(Informer informer, Class<?> beanClass) {
+        if (informer.resyncPeriod() < 1000) {
+            throw new IllegalArgumentException(
+                    "Resync period for class "
+                            + beanClass.getName()
+                            + " must be greater than 1000.");
         }
     }
-
 }

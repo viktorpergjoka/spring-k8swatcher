@@ -3,12 +3,11 @@ package io.k8informer.processor;
 import io.fabric8.kubernetes.client.informers.ResourceEventHandler;
 import io.k8informer.annotation.EventType;
 import io.k8informer.annotation.Watch;
+import java.lang.reflect.Method;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.ReflectionUtils;
-
-import java.lang.reflect.Method;
 
 @AllArgsConstructor
 @Slf4j
@@ -48,7 +47,13 @@ class IndexInformerResHandler implements ResourceEventHandler {
         if (watchMethod.getAnnotation(Watch.class).event().equals(EventType.DELETE)) {
             try {
                 Object instance = ctx.getBean(beanClass);
-                ReflectionUtils.invokeMethod(watchMethod, instance, obj, deletedFinalStateUnknown);
+                int parameterCount = watchMethod.getParameterCount();
+                if (parameterCount == 1) {
+                    ReflectionUtils.invokeMethod(watchMethod, instance, obj);
+                } else {
+                    ReflectionUtils.invokeMethod(
+                            watchMethod, instance, obj, deletedFinalStateUnknown);
+                }
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
