@@ -1,4 +1,4 @@
-package io.k8informer.annotation;
+package io.k8informer.annotation.cfg;
 
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;

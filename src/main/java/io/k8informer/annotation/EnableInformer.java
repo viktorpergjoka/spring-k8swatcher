@@ -1,5 +1,6 @@
 package io.k8informer.annotation;
 
+import io.k8informer.annotation.cfg.SpringK8InformerConfiguration;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

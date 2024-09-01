@@ -144,7 +144,7 @@ public class K8InformerEntrypoint {
 
     @PreDestroy
     public void shutdown() {
-        log.debug("Stopping informers");
+        log.info("Stopping informers");
         informerList.forEach(SharedIndexInformer::stop);
     }
 }
