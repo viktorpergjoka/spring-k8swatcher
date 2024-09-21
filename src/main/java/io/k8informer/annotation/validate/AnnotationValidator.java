@@ -40,7 +40,7 @@ public class AnnotationValidator {
             Informer informer = beanClass.getAnnotation(Informer.class);
             KubernetesClient client = clients.getClient(informer.clientName());
             if (client == null) {
-                throw new RuntimeException("Could not find Kubernetes a client with name " + informer.clientName());
+                throw new RuntimeException("Could not find Kubernetes client with name " + informer.clientName());
             }
             validateLabels(informer, beanClass);
             validateResyncPeriod(informer, beanClass);
@@ -71,7 +71,7 @@ public class AnnotationValidator {
         }
     }
 
-    void checkAddParams(Class<?> beanClass, Method method, Class<? extends KubernetesResource> type) {
+    private void checkAddParams(Class<?> beanClass, Method method, Class<? extends KubernetesResource> type) {
         Class<?>[] parameterTypes = method.getParameterTypes();
         if (parameterTypes.length != 1) {
             throw new MalformedParametersException("Invalid number of parameters for method "
@@ -83,7 +83,7 @@ public class AnnotationValidator {
         checkIsAssignableFrom(beanClass, method, parameterType, type);
     }
 
-    void checkUpdateParams(Class<?> beanClass, Method method, Class<? extends KubernetesResource> type) {
+    private void checkUpdateParams(Class<?> beanClass, Method method, Class<? extends KubernetesResource> type) {
         Class<?>[] parameterTypes = method.getParameterTypes();
         if (parameterTypes.length != 2) {
             throw new MalformedParametersException("Invalid number of parameters for method "
@@ -97,7 +97,7 @@ public class AnnotationValidator {
         checkIsAssignableFrom(beanClass, method, secondParam, type);
     }
 
-    void checkDeleteParams(Class<?> beanClass, Method method, Class<? extends KubernetesResource> type) {
+    private void checkDeleteParams(Class<?> beanClass, Method method, Class<? extends KubernetesResource> type) {
         Class<?>[] parameterTypes = method.getParameterTypes();
         int paramsLength = parameterTypes.length;
         if (paramsLength < 1 || paramsLength > 2) {
@@ -115,7 +115,7 @@ public class AnnotationValidator {
         }
     }
 
-    void checkIsAssignableFrom(
+    private void checkIsAssignableFrom(
             Class<?> beanClass, Method method, Class<?> param, Class<? extends KubernetesResource> type) {
         if (!param.isAssignableFrom(type)) {
             throw new MalformedParametersException(param.getTypeName()
@@ -128,7 +128,7 @@ public class AnnotationValidator {
         }
     }
 
-    void validateLabels(Informer informer, Class<?> beanClass) {
+    private void validateLabels(Informer informer, Class<?> beanClass) {
         String[] nsLabels = informer.nsLabels();
         String[] resLabels = informer.resLabels();
 
@@ -158,7 +158,7 @@ public class AnnotationValidator {
         checkForDuplicateKey(resLabels, beanClass);
     }
 
-    void checkForDuplicateKey(String[] labelValues, Class<?> beanClass) {
+    private void checkForDuplicateKey(String[] labelValues, Class<?> beanClass) {
         List<String> keys = Arrays.asList(labelValues).stream()
                 .map(value -> value.split("=")[0])
                 .toList();
@@ -171,7 +171,7 @@ public class AnnotationValidator {
         }
     }
 
-    void validateResyncPeriod(Informer informer, Class<?> beanClass) {
+    private void validateResyncPeriod(Informer informer, Class<?> beanClass) {
         if (informer.resyncPeriod() < 1000) {
             throw new IllegalArgumentException(
                     "Resync period for class " + beanClass.getName() + " must be greater than 1000.");
