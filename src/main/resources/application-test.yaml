@@ -1,9 +1,9 @@
 k8watch:
   informer:
     config:
-      spike:
+      default:
+        clientName: myClient
         nsLabels:
           "[kubernetes.io/metadata.name]": foo
         resLabels:
-          app: spike
-          foo: bar
+          app: myApp

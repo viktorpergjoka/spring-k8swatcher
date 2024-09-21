@@ -135,7 +135,8 @@ public class K8InformerEntrypoint {
                                 .collect(Collectors.toMap(item -> item.split("=")[0], item -> item.split("=")[1]));
                         Map<String, String> resLabels = Arrays.stream(informer.resLabels())
                                 .collect(Collectors.toMap(item -> item.split("=")[0], item -> item.split("=")[1]));
-                        informerConfiguration = new InformerConfiguration(nsLabels, resLabels, informer.resyncPeriod());
+                        informerConfiguration = new InformerConfiguration(
+                                nsLabels, resLabels, informer.resyncPeriod(), informer.clientName());
                     }
                     return new InformerContext(bean.getClass(), informer, informerConfiguration, client);
                 })
