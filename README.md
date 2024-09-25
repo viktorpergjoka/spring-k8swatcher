@@ -7,10 +7,11 @@ Spring-K8Informer
 Spring-K8Informer is an easy way to use Kubernetes Informer with Spring Boot only with few annotations. It uses the fabric8 Kubernetes Client.
 
 ### What is an Informer?
-An Informer is a mechanism where you watch on any Kubernetes Resource and react to them, e.g. wehn a Pod is added, or a ConfigMap is modified or even with Custom Resource Definitions.
+An Informer is a mechanism where you watch on any Kubernetes Resource and react to them, e.g. when a Pod is added, or a ConfigMap is modified or even with Custom Resource Definitions.
 
 
 ## Prerequisites
+
 
 ```
 
@@ -25,7 +26,7 @@ An Informer is a mechanism where you watch on any Kubernetes Resource and react 
 public class WatchApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(WatchtestApplication.class, args);
+        SpringApplication.run(WatchApplication.class, args);
     }
 }
 ```
@@ -52,7 +53,7 @@ public class MyInformer {
 }
 
 ```
-This a valid example although it is not recomendeed because this Informer will watch in ALL namespaces for every Pod, every ConfigMap and every Service resources. 
+This a valid example although it is not recomendeed because this Informer will watch in ALL namespaces for every Pod, every ConfigMap and every Service resources. So therefore it needs an user with all the permissions to watch on any namespace for any resource.
 
 
 ## Configuring Informers
@@ -83,8 +84,9 @@ public class MyInformer {
     }
 }
 
-This will create an informer which watches for resources with the label app=foo in the namespace with the name foo
 ```
+This will create an informer which watches for resources with the label app=foo in the namespace with the name foo
+
 ### Configuring via application.yml
 
 The same can be configured via application.yml:
@@ -120,7 +122,7 @@ k8watch:
 
 ```
 
-This will watch for all Pods with label app=spike **and** foo=bar in **ALL** namespaces which have the label stio-injection=enabled.
+This will watch for all Pods with label app=spike **and** foo=bar in **ALL** namespaces which have the label istio-injection=enabled.
 
 Note that you should write the label keys inside [] in yaml because '/' will be parsed in the application.yaml
 so something like
@@ -207,3 +209,4 @@ k8watch:
           app: myApp
 
 ```
+
