@@ -2,32 +2,28 @@ package io.k8informer.annotation.validate;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import io.k8informer.annotation.EventType;
 import io.k8informer.annotation.Informer;
 import io.k8informer.annotation.ValidateAnnotationTestConfig;
-import io.k8informer.annotation.Watch;
 import io.k8informer.annotation.processor.KubeClientFactory;
 import java.lang.reflect.MalformedParametersException;
-import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.ApplicationContext;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @SpringBootTest(classes = {ValidateAnnotationTestConfig.class})
 public class AnnotationValidatorTest {
 
-    @Autowired
+    @MockBean
     private ApplicationContext ctx;
 
-    @MockBean
+    @Autowired
+    private ApplicationContext testCtx;
+
     private KubeClientFactory clientFactory;
 
     private AnnotationValidator validator;
@@ -36,123 +32,87 @@ public class AnnotationValidatorTest {
 
     @BeforeEach
     public void setUp() {
+        this.informerBeanMap = testCtx.getBeansWithAnnotation(Informer.class);
+        this.clientFactory = new KubeClientFactory(ctx);
         this.validator = new AnnotationValidator(ctx, clientFactory);
-        this.informerBeanMap = ctx.getBeansWithAnnotation(Informer.class);
+        clientFactory.init();
+        Mockito.clearInvocations(ctx);
     }
 
     @Test
     public void testInvalidNsLabel() {
-        Class<?> beanClass = informerBeanMap.get("invalidNsLabelSyntaxTestBean").getClass();
+        Mockito.when(ctx.getBeansWithAnnotation(Informer.class))
+                .thenReturn(Map.of(
+                        "invalidNsLabelSyntaxTestBean", this.informerBeanMap.get("invalidNsLabelSyntaxTestBean")));
+        validator.init();
 
-        assertThrows(MalformedParametersException.class, () -> {
-            ReflectionTestUtils.invokeMethod(
-                    validator, "validateLabels", beanClass.getAnnotation(Informer.class), beanClass);
-        });
+        assertThrows(MalformedParametersException.class, () -> validator.validateInformerAnnotations());
     }
 
     @Test
     public void testInvalidResLabel() {
-        Class<?> beanClass =
-                informerBeanMap.get("invalidResLabelSyntaxTestBean").getClass();
+        Mockito.when(ctx.getBeansWithAnnotation(Informer.class))
+                .thenReturn(Map.of(
+                        "invalidResLabelSyntaxTestBean", this.informerBeanMap.get("invalidResLabelSyntaxTestBean")));
+        validator.init();
 
-        assertThrows(MalformedParametersException.class, () -> {
-            ReflectionTestUtils.invokeMethod(
-                    validator, "validateLabels", beanClass.getAnnotation(Informer.class), beanClass);
-        });
+        assertThrows(MalformedParametersException.class, () -> validator.validateInformerAnnotations());
     }
 
     @Test
     public void testInvalidResyncPeriod() {
-        Class<?> beanClass = informerBeanMap.get("invalidResyncPeriodTestBean").getClass();
+        Mockito.when(ctx.getBeansWithAnnotation(Informer.class))
+                .thenReturn(
+                        Map.of("invalidResyncPeriodTestBean", this.informerBeanMap.get("invalidResyncPeriodTestBean")));
+        validator.init();
 
-        assertThrows(IllegalArgumentException.class, () -> {
-            ReflectionTestUtils.invokeMethod(
-                    validator, "validateResyncPeriod", beanClass.getAnnotation(Informer.class), beanClass);
-        });
+        assertThrows(IllegalArgumentException.class, () -> validator.validateInformerAnnotations());
     }
 
     @Test
     public void testDuplicateLabel() {
-        Class<?> beanClass = informerBeanMap.get("duplicateNsLabelTestBean").getClass();
+        Mockito.when(ctx.getBeansWithAnnotation(Informer.class))
+                .thenReturn(Map.of("duplicateNsLabelTestBean", this.informerBeanMap.get("duplicateNsLabelTestBean")));
+        validator.init();
 
-        assertThrows(IllegalArgumentException.class, () -> {
-            ReflectionTestUtils.invokeMethod(
-                    validator,
-                    "checkForDuplicateKey",
-                    beanClass.getAnnotation(Informer.class).nsLabels(),
-                    beanClass);
-        });
+        assertThrows(IllegalArgumentException.class, () -> validator.validateInformerAnnotations());
     }
 
     @Test
     public void testAddParam() {
-        Class<?> beanClass = informerBeanMap.get("invalidParamTestBean").getClass();
-        Method[] methods = beanClass.getMethods();
-        Map<EventType, Method> eventMap = Arrays.stream(methods)
-                .filter(method -> method.isAnnotationPresent(Watch.class))
-                .collect(Collectors.toMap(m -> m.getAnnotation(Watch.class).event(), Function.identity()));
+        Mockito.when(ctx.getBeansWithAnnotation(Informer.class))
+                .thenReturn(Map.of("invalidAddParamTestBean", this.informerBeanMap.get("invalidAddParamTestBean")));
+        validator.init();
 
-        assertThrows(MalformedParametersException.class, () -> {
-            ReflectionTestUtils.invokeMethod(
-                    validator,
-                    "checkAddParams",
-                    beanClass,
-                    eventMap.get(EventType.ADD),
-                    eventMap.get(EventType.ADD).getAnnotation(Watch.class).resource());
-        });
+        assertThrows(MalformedParametersException.class, () -> validator.validateWatchAnnotations());
     }
 
     @Test
     public void checkUpdateParams() {
-        Class<?> beanClass = informerBeanMap.get("invalidParamTestBean").getClass();
-        Method[] methods = beanClass.getMethods();
-        Map<EventType, Method> eventMap = Arrays.stream(methods)
-                .filter(method -> method.isAnnotationPresent(Watch.class))
-                .collect(Collectors.toMap(m -> m.getAnnotation(Watch.class).event(), Function.identity()));
+        Mockito.when(ctx.getBeansWithAnnotation(Informer.class))
+                .thenReturn(
+                        Map.of("invalidUpdateParamTestBean", this.informerBeanMap.get("invalidUpdateParamTestBean")));
+        validator.init();
 
-        assertThrows(MalformedParametersException.class, () -> {
-            ReflectionTestUtils.invokeMethod(
-                    validator,
-                    "checkAddParams",
-                    beanClass,
-                    eventMap.get(EventType.UPDATE),
-                    eventMap.get(EventType.UPDATE).getAnnotation(Watch.class).resource());
-        });
+        assertThrows(MalformedParametersException.class, () -> validator.validateWatchAnnotations());
     }
 
     @Test
     public void checkDeleteParams() {
-        Class<?> beanClass = informerBeanMap.get("invalidParamTestBean").getClass();
-        Method[] methods = beanClass.getMethods();
-        Map<EventType, Method> eventMap = Arrays.stream(methods)
-                .filter(method -> method.isAnnotationPresent(Watch.class))
-                .collect(Collectors.toMap(m -> m.getAnnotation(Watch.class).event(), Function.identity()));
+        Mockito.when(ctx.getBeansWithAnnotation(Informer.class))
+                .thenReturn(
+                        Map.of("invalidDeleteParamTestBean", this.informerBeanMap.get("invalidDeleteParamTestBean")));
+        validator.init();
 
-        assertThrows(MalformedParametersException.class, () -> {
-            ReflectionTestUtils.invokeMethod(
-                    validator,
-                    "checkDeleteParams",
-                    beanClass,
-                    eventMap.get(EventType.DELETE),
-                    eventMap.get(EventType.DELETE).getAnnotation(Watch.class).resource());
-        });
+        assertThrows(MalformedParametersException.class, () -> validator.validateWatchAnnotations());
     }
 
     @Test
     public void checkIsAssignable() {
-        Class<?> beanClass = informerBeanMap.get("isNotAssignableTestBean").getClass();
-        Method[] methods = beanClass.getMethods();
-        Map<EventType, Method> eventMap = Arrays.stream(methods)
-                .filter(method -> method.isAnnotationPresent(Watch.class))
-                .collect(Collectors.toMap(m -> m.getAnnotation(Watch.class).event(), Function.identity()));
+        Mockito.when(ctx.getBeansWithAnnotation(Informer.class))
+                .thenReturn(Map.of("isNotAssignableTestBean", this.informerBeanMap.get("isNotAssignableTestBean")));
+        validator.init();
 
-        assertThrows(MalformedParametersException.class, () -> {
-            ReflectionTestUtils.invokeMethod(
-                    validator,
-                    "checkAddParams",
-                    beanClass,
-                    eventMap.get(EventType.ADD),
-                    eventMap.get(EventType.ADD).getAnnotation(Watch.class).resource());
-        });
+        assertThrows(MalformedParametersException.class, () -> validator.validateWatchAnnotations());
     }
 }

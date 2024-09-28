@@ -4,5 +4,5 @@ import io.k8informer.annotation.Informer;
 
 @Informer(
         nsLabels = {"kubernetes.io/metadata.name=foo", "kubernetes.io/metadata.name=foo"},
-        resLabels = {"app:foo"})
+        resLabels = {"app=foo"})
 public class DuplicateNsLabelTestBean {}

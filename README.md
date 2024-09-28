@@ -42,12 +42,12 @@ public class MyInformer {
     }
 
     @Watch(event = EventType.UPDATE, resource = ConfigMap.class)
-    public void cmUpdated(Pod pod1, Pod pod2){
+    public void cmUpdated(ConfigMap oldCm, ConfigMap newCm){
         
     }
 
     @Watch(event = EventType.DELETE, resource = Service.class)
-    public void serviceDeleted(Pod pod){
+    public void serviceDeleted(Service service){
         
     }
 }
@@ -74,12 +74,12 @@ public class MyInformer {
     }
 
     @Watch(event = EventType.UPDATE, resource = ConfigMap.class)
-    public void cmUpdated(Pod pod1, Pod pod2){
+    public void cmUpdated(ConfigMap oldCm, ConfigMap newCm){
         
     }
 
     @Watch(event = EventType.DELETE, resource = Service.class)
-    public void serviceDeleted(Pod pod){
+    public void serviceDeleted(Service service){
         
     }
 }
@@ -100,7 +100,7 @@ public class Test2 {
     }
 
     @Watch(event = EventType.UPDATE, resource = Pod.class)
-    public void test(Pod pod1, Pod pod2){
+    public void test(Pod oldPod, Pod newPod){
     }
 
     @Watch(event = EventType.DELETE, resource = Pod.class)
