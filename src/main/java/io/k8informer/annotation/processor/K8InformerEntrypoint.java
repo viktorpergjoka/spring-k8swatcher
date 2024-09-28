@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
+@SuppressWarnings("rawtypes")
 public class K8InformerEntrypoint {
 
     private AnnotationValidator validator;

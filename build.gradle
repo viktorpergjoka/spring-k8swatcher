@@ -35,10 +35,10 @@ dependencyManagement {
 dependencies {
 
 
-    //implementation 'jakarta.annotation:jakarta.annotation-api:3.0.0'
-    //implementation 'org.springframework.boot:spring-boot-autoconfigure'
-    //implementation 'org.springframework:spring-context-support'
-    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'jakarta.annotation:jakarta.annotation-api:3.0.0'
+    implementation 'org.springframework.boot:spring-boot-autoconfigure'
+    implementation 'org.springframework:spring-context-support'
+    //implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.projectlombok:lombok'
     implementation 'io.fabric8:kubernetes-client:6.13.2'
     annotationProcessor 'org.projectlombok:lombok'
