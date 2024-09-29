@@ -75,9 +75,10 @@ public class AnnotationValidator {
         Class<?>[] parameterTypes = method.getParameterTypes();
         if (parameterTypes.length != 1) {
             throw new MalformedParametersException("Invalid number of parameters for method "
-                    + method.getName()
-                    + " . Expected 1, got "
-                    + parameterTypes.length);
+                    + method.getName() + " in class " + beanClass.getName()
+                    + " . Expected 1, got " + parameterTypes.length + ". Signature should be " + method.getName() + "("
+                    + type.getSimpleName() + " "
+                    + type.getSimpleName().toLowerCase() + ")");
         }
         Class<?> parameterType = parameterTypes[0];
         checkIsAssignableFrom(beanClass, method, parameterType, type);
@@ -87,9 +88,12 @@ public class AnnotationValidator {
         Class<?>[] parameterTypes = method.getParameterTypes();
         if (parameterTypes.length != 2) {
             throw new MalformedParametersException("Invalid number of parameters for method "
-                    + method.getName()
+                    + method.getName() + " in class " + beanClass.getName()
                     + " . Expected 2, got "
-                    + parameterTypes.length);
+                    + parameterTypes.length
+                    + ". Signature should be " + method.getName() + "("
+                    + type.getSimpleName() + " old"
+                    + type.getSimpleName() + ", " + type.getSimpleName() + " new" + type.getSimpleName() + ")");
         }
         Class<?> firstParam = parameterTypes[0];
         Class<?> secondParam = parameterTypes[1];
@@ -101,7 +105,11 @@ public class AnnotationValidator {
         Class<?>[] parameterTypes = method.getParameterTypes();
         int paramsLength = parameterTypes.length;
         if (paramsLength < 1 || paramsLength > 2) {
-            throw new MalformedParametersException("Invalid number of parameters for method " + method.getName());
+            throw new MalformedParametersException("Invalid number of parameters for method "
+                    + method.getName() + " in class " + beanClass.getName()
+                    + " . Expected 1, got " + parameterTypes.length + ". Signature should be " + method.getName() + "("
+                    + type.getSimpleName() + " "
+                    + type.getSimpleName().toLowerCase() + ")");
         }
         Class<?> firstParam = parameterTypes[0];
         checkIsAssignableFrom(beanClass, method, firstParam, type);
