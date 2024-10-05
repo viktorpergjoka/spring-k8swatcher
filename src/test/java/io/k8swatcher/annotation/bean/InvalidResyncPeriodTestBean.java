@@ -1,0 +1,9 @@
+package io.k8swatcher.annotation.bean;
+
+import io.k8swatcher.annotation.Informer;
+
+@Informer(
+        nsLabels = {"kubernetes.io/metadata.name=foo"},
+        resLabels = {"app=foo"},
+        resyncPeriod = 10)
+public class InvalidResyncPeriodTestBean {}

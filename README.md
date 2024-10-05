@@ -1,13 +1,12 @@
-Spring-K8Informer
+Spring-K8sWatcher
 =========
 
 
-# Spring-K8Informer
+# Spring-K8sWatcher
 
 Spring-K8Informer is an easy way to use Kubernetes Informer with Spring Boot only with few annotations. It uses the fabric8 Kubernetes Client.
 
-### What is an Informer?
-An Informer is a mechanism where you watch on any Kubernetes Resource and react to them, e.g. when a Pod is added, or a ConfigMap is modified or even with Custom Resource Definitions.
+An Informer is a mechanism where you can watch on any Kubernetes Resource for changes and react to them, e.g. when a Pod is added, or a ConfigMap is modified or even with Custom Resource Definitions.
 
 
 ## Prerequisites
