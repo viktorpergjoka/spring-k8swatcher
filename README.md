@@ -45,7 +45,7 @@ Maven:
          <groupId>io.fabric8</groupId>
          <artifactId>kubernetes-client</artifactId>
     </exclusion>
-     </exclusions>
+  </exclusions>
 </dependency>
 ```
 
