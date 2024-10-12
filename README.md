@@ -4,16 +4,58 @@ Spring-K8sWatcher
 
 # Spring-K8sWatcher
 
-Spring-K8Informer is an easy way to use Kubernetes Informer with Spring Boot only with few annotations. It uses the fabric8 Kubernetes Client.
+Spring-K8sWatcher is an easy way to use Kubernetes Informer with Spring Boot only with few annotations. It uses the fabric8 Kubernetes Client.
 
-An Informer is a mechanism where you can watch on any Kubernetes Resource for changes and react to them, e.g. when a Pod is added, or a ConfigMap is modified or even with Custom Resource Definitions.
-
+An Informer is a mechanism where you can watch on any Kubernetes Resource for changes (ADD, UPDATE, DELETE) and react to them, e.g. when a Pod is added, or a ConfigMap is modified or even for Custom Resource Definitions.
+Therefore you could build Kubernetes Controllers and Operators with it.
 
 ## Prerequisites
 
+Add dependency:
+
+Maven:
+
+```
+<dependency>
+  <groupId>io.k8swatcher</groupId>
+  <artifactId>spring-k8swatcher</artifactId>
+  <version>0.0.2</version>
+</dependency>
 
 ```
 
+Gradle:
+
+```
+implementation 'io.k8swatcher:spring-k8swatcher:0.0.2'
+
+```
+
+k8swatcher is already shipped with a fabric8 kubernetes client dependency. If you want to provide your own you have to exclude it:
+
+Maven:
+
+```
+<dependency>
+  <groupId>io.k8swatcher</groupId>
+  <artifactId>spring-k8swatcher</artifactId>
+  <version>0.0.2</version>
+  <exclusions>
+     <exclusion>
+         <groupId>io.fabric8</groupId> <!-- Exclude Project-D from Project-B -->
+         <artifactId>kubernetes-client</artifactId>
+    </exclusion>
+     </exclusions>
+</dependency>
+```
+
+
+Gradle:
+
+```
+    implementation ('io.k8swatcher:spring-k8swatcher:0.0.2'){
+        exclude group: 'io.fabric8', module: 'kubernetes-client'
+    }
 
 ```
 
@@ -52,19 +94,54 @@ public class MyInformer {
 }
 
 ```
-This a valid example although it is not recomendeed because this Informer will watch in ALL namespaces for every Pod, every ConfigMap and every Service resources. So therefore it needs an user with all the permissions to watch on any namespace for any resource.
+This a valid example although it is not recommended because this Informer will watch in ALL namespaces for every Pod, every ConfigMap and every Service resources. So therefore it needs an user with all the permissions to watch on any namespace for any resource.
+
+The name of the method is not important, whereas the parameter definitions is important.
+The Parameter signature must be the following:
+* Add: Resource resource
+* Update: Resource oldResource, Resource new Resource
+* Delete: Resource resource, (Optionally) boolean deletedFinalStateUnknown
+
+Examples:
+```
+* @Watch(event = EventType.ADD, resource = Pod.class)
+  public void myMethod(Pod pod){}
 
 
-## Configuring Informers
+* @Watch(event = EventType.UPDATE, resource = RoleBinding.class)
+  public void rolebindingUpdated(RoleBinding oldBinding, RoleBinding newBinding){}
+
+
+* @Watch(event = EventType.DELETE, resource = Pod.class)
+    public void delete(Pod pod){}
+
+
+* @Watch(event = EventType.DELETE, resource = Pod.class)
+  public void delete(Pod pod, boolean deletedFinalStateUnknown){}
+```
+
+## Configuration
 
 There are 2 ways to configure the informers:
 - in the annotation values
 - via application.yml
 
+The order will be the following:
+* application.yml
+* Annotation value
+
+| Property     | Description                                                                                                                                                                                                                       | Default value                         |
+|--------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|
+| name         | Name of the referenced configuration in the application.yml                                                                                                                                                                       | "default"                             |
+| nsLabels     | a comma separated list of key=value for defining the namespace labels. When used in application.yml it should be wrapped inside "[]". If no value will be provided "all" will be used.                                            | ""                                    |
+| resLabels    | a comma separated list of key=value for defining the resource labels. When used in application.yml and "/" is part of the label e.g. myApp/xy it should be wrapped inside "[]" . If no value will be provided "all" will be used. | ""                                    |
+| resyncPeriod | The resync with the Kubernetes API Server for updating the informer cache. Must be greater than 1000 or an Exception is thrown                                                                                                    | 1000                                  |
+| clientName   | The name of the Kubernetes Client bean which should be used. Must be a of type io.fabric8.kubernetes.client.KubernetesClient                                                                                                      | new KubernetesClientBuilder().build() |
+
 ### Configure via annotation values:
 
 ```
-@Informer(nsLabels = {"kubernetes.io/metadata.name=foo"}, resLabels = {"app=foo"})
+@Informer(nsLabels = {"kubernetes.io/metadata.name=foo"}, resLabels = {"app=foo"}, resyncPeriod = 2000)
 public class MyInformer {
 
     @Watch(event = EventType.ADD, resource = Pod.class)
@@ -109,8 +186,7 @@ public class Test2 {
 ```
 
 ```
-k8watch:
-  informer:
+k8swatcher:
     config:
       myConfig:
         nsLabels:
@@ -165,8 +241,7 @@ public class SecretInformer {
 ```
 
 ```
-k8watch:
-  informer:
+k8swatcher:
     config:
       default:
         nsLabels:
@@ -197,15 +272,11 @@ You would then reference to your client via annotation value or application.yml:
 ```
 
 ```
-k8watch:
-  informer:
+k8swatcher:
     config:
       default:
         clientName: myClient
-        nsLabels:
-          "[kubernetes.io/metadata.name]": foo
-        resLabels:
-          app: myApp
+        ....
 
 ```
 

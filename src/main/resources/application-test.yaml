@@ -1,5 +1,4 @@
-k8watch:
-  informer:
+k8swatcher:
     config:
       default:
         clientName: myClient

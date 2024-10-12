@@ -10,7 +10,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ConfigurationProperties(prefix = "k8watch.informer")
+@ConfigurationProperties(prefix = "k8swatcher")
 @Data
 public class InformerConfigurationProperty {
 

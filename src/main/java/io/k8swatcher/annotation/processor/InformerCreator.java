@@ -130,6 +130,10 @@ public class InformerCreator {
         if (resyncPeriod == null) {
             resyncPeriod = informer.resyncPeriod();
         }
+        if (resyncPeriod < 1000) {
+            throw new IllegalArgumentException(
+                    "Resync period for class " + bean.getClass().getName() + " must be greater than 1000.");
+        }
         InformerConfiguration newCfg = new InformerConfiguration(nsLabels, resLabels, resyncPeriod, clientName);
 
         return new InformerContext(bean.getClass(), informer, newCfg, kubeClientFactory.getClient(clientName));
