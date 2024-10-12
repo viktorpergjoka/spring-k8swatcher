@@ -2,8 +2,6 @@ Spring-K8sWatcher
 =========
 
 
-# Spring-K8sWatcher
-
 Spring-K8sWatcher is an easy way to use Kubernetes Informer with Spring Boot only with few annotations. It uses the fabric8 Kubernetes Client.
 
 An Informer is a mechanism where you can watch on any Kubernetes Resource for changes (ADD, UPDATE, DELETE) and react to them, e.g. when a Pod is added, or a ConfigMap is modified or even for Custom Resource Definitions.
@@ -59,6 +57,8 @@ Gradle:
 
 ```
 
+**Note**: its clear that to watch resources on a namespace, you need access with the user to that namespace with ["get", "watch", "list"] as verbs on the resources
+
 ## Quick Start
 
 ```
@@ -79,17 +79,17 @@ public class MyInformer {
 
     @Watch(event = EventType.ADD, resource = Pod.class)
     public void podAdded(Pod pod){
-       
+       //do your logic here
     }
 
     @Watch(event = EventType.UPDATE, resource = ConfigMap.class)
     public void cmUpdated(ConfigMap oldCm, ConfigMap newCm){
-        
+      //do your logic here
     }
 
     @Watch(event = EventType.DELETE, resource = Service.class)
     public void serviceDeleted(Service service){
-        
+      //do your logic here    
     }
 }
 
@@ -98,9 +98,9 @@ This a valid example although it is not recommended because this Informer will w
 
 The name of the method is not important, whereas the parameter definitions is important.
 The Parameter signature must be the following:
-* Add: Resource resource
-* Update: Resource oldResource, Resource new Resource
-* Delete: Resource resource, (Optionally) boolean deletedFinalStateUnknown
+* Add: (Resource resource)
+* Update: (Resource oldResource, Resource new Resource)
+* Delete: (Resource resource, (Optionally) boolean deletedFinalStateUnknown)
 
 Examples:
 ```
