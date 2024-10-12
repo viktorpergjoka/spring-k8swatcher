@@ -42,7 +42,7 @@ Maven:
   <version>0.0.2</version>
   <exclusions>
      <exclusion>
-         <groupId>io.fabric8</groupId> <!-- Exclude Project-D from Project-B -->
+         <groupId>io.fabric8</groupId>
          <artifactId>kubernetes-client</artifactId>
     </exclusion>
      </exclusions>
@@ -94,7 +94,7 @@ public class MyInformer {
 }
 
 ```
-This a valid example although it is not recommended because this Informer will watch in ALL namespaces for every Pod, every ConfigMap and every Service resources. So therefore it needs an user with all the permissions to watch on any namespace for any resource.
+This a valid example although it is not recommended because this Informer will watch in ALL namespaces for every Pod, every ConfigMap and every Service resources. It needs an user with all the permissions to watch on any namespace for any resource.
 
 The name of the method is not important, whereas the parameter definitions is important.
 The Parameter signature must be the following:
@@ -165,23 +165,20 @@ This will create an informer which watches for resources with the label app=foo 
 
 ### Configuring via application.yml
 
-The same can be configured via application.yml:
+The same can be configured in the application.yml:
 
 ```
 @Informer(name = "myConfig")
 public class Test2 {
 
     @Watch(event = EventType.ADD, resource = Pod.class)
-    public void test(Pod pod){
-    }
+    public void podAdded(Pod pod){}
 
     @Watch(event = EventType.UPDATE, resource = Pod.class)
-    public void test(Pod oldPod, Pod newPod){
-    }
+    public void podUpdated(Pod oldPod, Pod newPod){}
 
     @Watch(event = EventType.DELETE, resource = Pod.class)
-    public void test2(Pod pod, boolean deletedFinalStateUnknown){
-    }
+    public void podDeleted(Pod pod, boolean deletedFinalStateUnknown){}
 }
 ```
 
@@ -197,7 +194,7 @@ k8swatcher:
 
 ```
 
-This will watch for all Pods with label app=spike **and** foo=bar in **ALL** namespaces which have the label istio-injection=enabled.
+This will watch for all Pods with label app=spike **and** foo=bar in all namespaces which have the label istio-injection=enabled.
 
 Note that you should write the label keys inside [] in yaml because '/' will be parsed in the application.yaml
 so something like
@@ -209,7 +206,7 @@ so something like
 ...
 
 ```
-wont work and you would need to define it like this:
+won't work and you would need to define it like this:
 
 ```
 ...
@@ -219,14 +216,14 @@ wont work and you would need to define it like this:
 
 ```
 
-If no name is defined, the default configs name is   *default*
+If no name is defined, the default configs name is *default*
 
 ```
 @Informer
 public class PodInformer {
 
     @Watch(event = EventType.ADD, resource = Pod.class)
-    public void test(Pod pod){
+    public void podAdded(Pod pod){
     }
 }
 
@@ -234,7 +231,7 @@ public class PodInformer {
 public class SecretInformer {
 
     @Watch(event = EventType.ADD, resource = Secret.class)
-    public void test(Secret secret){
+    public void secretAdded(Secret secret){
     }
 }
 
