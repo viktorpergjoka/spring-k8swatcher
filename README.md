@@ -99,24 +99,24 @@ This a valid example although it is not recommended because this Informer will w
 The name of the method is not important, whereas the parameter definitions is important.
 The Parameter signature must be the following:
 * Add: (Resource resource)
-* Update: (Resource oldResource, Resource new Resource)
+* Update: (Resource oldResource, Resource newResource)
 * Delete: (Resource resource, (Optionally) boolean deletedFinalStateUnknown)
 
 Examples:
 ```
-* @Watch(event = EventType.ADD, resource = Pod.class)
+ @Watch(event = EventType.ADD, resource = Pod.class)
   public void myMethod(Pod pod){}
 
 
-* @Watch(event = EventType.UPDATE, resource = RoleBinding.class)
+ @Watch(event = EventType.UPDATE, resource = RoleBinding.class)
   public void rolebindingUpdated(RoleBinding oldBinding, RoleBinding newBinding){}
 
 
-* @Watch(event = EventType.DELETE, resource = Pod.class)
+ @Watch(event = EventType.DELETE, resource = Pod.class)
     public void delete(Pod pod){}
 
 
-* @Watch(event = EventType.DELETE, resource = Pod.class)
+ @Watch(event = EventType.DELETE, resource = Pod.class)
   public void delete(Pod pod, boolean deletedFinalStateUnknown){}
 ```
 
@@ -130,13 +130,13 @@ The order will be the following:
 * application.yml
 * Annotation value
 
-| Property     | Description                                                                                                                                                                                                                       | Default value                         |
-|--------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|
-| name         | Name of the referenced configuration in the application.yml                                                                                                                                                                       | "default"                             |
-| nsLabels     | a comma separated list of key=value for defining the namespace labels. When used in application.yml it should be wrapped inside "[]". If no value will be provided "all" will be used.                                            | ""                                    |
-| resLabels    | a comma separated list of key=value for defining the resource labels. When used in application.yml and "/" is part of the label e.g. myApp/xy it should be wrapped inside "[]" . If no value will be provided "all" will be used. | ""                                    |
-| resyncPeriod | The resync with the Kubernetes API Server for updating the informer cache. Must be greater than 1000 or an Exception is thrown                                                                                                    | 1000                                  |
-| clientName   | The name of the Kubernetes Client bean which should be used. Must be a of type io.fabric8.kubernetes.client.KubernetesClient                                                                                                      | new KubernetesClientBuilder().build() |
+| Property     | Description                                                                                                                                                                                                                         | Default value                         |
+|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|
+| name         | Name of the referenced configuration in the application.yml                                                                                                                                                                         | "default"                             |
+| nsLabels     | a comma separated list of key=value for defining the namespace labels. When used in application.yml it should be wrapped inside "[]". If no value will be provided "all" will be used.                                              | ""                                    |
+| resLabels    | a comma separated list of key=value for defining the resource labels. When used in application.yml and "/" is part of the label e.g. myApp/xy=z it should be wrapped inside "[]" . If no value will be provided "all" will be used. | ""                                    |
+| resyncPeriod | The resync with the Kubernetes API Server for updating the informer cache. Must be greater than 1000 or an Exception is thrown                                                                                                      | 1000                                  |
+| clientName   | The name of the Kubernetes Client bean which should be used. Must be a of type io.fabric8.kubernetes.client.KubernetesClient                                                                                                        | new KubernetesClientBuilder().build() |
 
 ### Configure via annotation values:
 
@@ -169,7 +169,7 @@ The same can be configured in the application.yml:
 
 ```
 @Informer(name = "myConfig")
-public class Test2 {
+public class MyInformer {
 
     @Watch(event = EventType.ADD, resource = Pod.class)
     public void podAdded(Pod pod){}
