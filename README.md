@@ -11,9 +11,16 @@ Therefore you could build Kubernetes Controllers and Operators with it.
 
 Add dependency:
 
+You don't need a web context like spring-boot-starter-web. spring-boot-starter is sufficient.
+
 Maven:
 
 ```
+<dependency>
+  <groupId>org.springframework.boot</groupId>
+  <artifactId>spring-boot-starter</artifactId>
+</dependency>
+
 <dependency>
   <groupId>io.k8swatcher</groupId>
   <artifactId>spring-k8swatcher</artifactId>
@@ -25,6 +32,7 @@ Maven:
 Gradle:
 
 ```
+implementation 'org.springframework.boot:spring-boot-starter'
 implementation 'io.k8swatcher:spring-k8swatcher:0.0.2'
 
 ```
@@ -57,7 +65,9 @@ Gradle:
 
 ```
 
-**Note**: its clear that to watch resources on a namespace, you need access with the user to that namespace with ["get", "watch", "list"] as verbs on the resources
+<br>
+
+**A Note about permissions**: its obvious that to watch resources on a namespace, you need access with the user to that namespace with ["get", "watch", "list"] as verbs on the resources.
 
 ## Quick Start
 
@@ -130,13 +140,13 @@ The order will be the following:
 * application.yml
 * Annotation value
 
-| Property     | Description                                                                                                                                                                                                                         | Default value                         |
-|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|
-| name         | Name of the referenced configuration in the application.yml                                                                                                                                                                         | "default"                             |
-| nsLabels     | a comma separated list of key=value for defining the namespace labels. When used in application.yml it should be wrapped inside "[]". If no value will be provided "all" will be used.                                              | ""                                    |
-| resLabels    | a comma separated list of key=value for defining the resource labels. When used in application.yml and "/" is part of the label e.g. myApp/xy=z it should be wrapped inside "[]" . If no value will be provided "all" will be used. | ""                                    |
-| resyncPeriod | The resync with the Kubernetes API Server for updating the informer cache. Must be greater than 1000 or an Exception is thrown                                                                                                      | 1000                                  |
-| clientName   | The name of the Kubernetes Client bean which should be used. Must be a of type io.fabric8.kubernetes.client.KubernetesClient                                                                                                        | new KubernetesClientBuilder().build() |
+| Property     | Description                                                                                                                                                                                                                                             | Default value                         |
+|--------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|
+| name         | Name of the referenced configuration in the application.yml                                                                                                                                                                                             | "default"                             |
+| nsLabels     | a comma separated list of key=value for defining the namespace labels. When used in application.yml and the key has "/"  it should be wrapped inside "[]" e.g. "[kubernetes.io/metadata.name]" . If no value will be provided "all" will be used.       | ""                                    |
+| resLabels    | a comma separated list of key=value for defining the resource labels. When used in application.yml and "/" is part of the label e.g. myApp/xy=z it should be wrapped inside "[]" e.g. "[myApp/xy]"   . If no value will be provided "all" will be used. | ""                                    |
+| resyncPeriod | The resync with the Kubernetes API Server for updating the informer cache. Must be greater than 1000 or an Exception is thrown                                                                                                                          | 1000                                  |
+| clientName   | The name of the Kubernetes Client bean which should be used. Must be a of type io.fabric8.kubernetes.client.KubernetesClient                                                                                                                            | new KubernetesClientBuilder().build() |
 
 ### Configure via annotation values:
 
