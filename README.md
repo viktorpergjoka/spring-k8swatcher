@@ -1,6 +1,6 @@
 Spring-K8sWatcher
 =========
-[![Build](https://github.com/viktorpergjoka/spring-k8swatcher/actions/workflows/gradle.yml/badge.svg)](https://github.com/viktorpergjoka/spring-k8swatcher/actions/workflows/gradle.yml)
+[![Build](https://github.com/viktorpergjoka/spring-k8swatcher/actions/workflows/build.yml/badge.svg)](https://github.com/viktorpergjoka/spring-k8swatcher/actions/workflows/build.yml)
 
 
 Spring-K8sWatcher is an easy way to use Kubernetes Informer with Spring Boot only with few annotations. It uses the fabric8 Kubernetes Client.
