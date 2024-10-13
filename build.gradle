@@ -84,7 +84,7 @@ signing {
 centralPortal{
     pom {
         name= "Viktor Pergjoka"
-        description="Spting Boot Kubernetes Watcher"
+        description="Spring Boot Kubernetes resources Watcher"
         url = "https://github.com/viktorpergjoka/spring-k8swatcher"
         licenses{
             license{

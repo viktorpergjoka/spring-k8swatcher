@@ -105,19 +105,19 @@ The Parameter signature must be the following:
 Examples:
 ```
  @Watch(event = EventType.ADD, resource = Pod.class)
-  public void myMethod(Pod pod){}
+ public void myMethod(Pod pod){}
 
 
  @Watch(event = EventType.UPDATE, resource = RoleBinding.class)
-  public void rolebindingUpdated(RoleBinding oldBinding, RoleBinding newBinding){}
+ public void rolebindingUpdated(RoleBinding oldBinding, RoleBinding newBinding){}
 
 
  @Watch(event = EventType.DELETE, resource = Pod.class)
-    public void delete(Pod pod){}
+ public void delete(Pod pod){}
 
 
  @Watch(event = EventType.DELETE, resource = Pod.class)
-  public void delete(Pod pod, boolean deletedFinalStateUnknown){}
+ public void delete(Pod pod, boolean deletedFinalStateUnknown){}
 ```
 
 ## Configuration
