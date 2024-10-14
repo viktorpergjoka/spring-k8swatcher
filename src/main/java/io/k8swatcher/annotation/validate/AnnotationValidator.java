@@ -10,7 +10,7 @@ import jakarta.annotation.PostConstruct;
 import java.lang.reflect.MalformedParametersException;
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -140,34 +140,25 @@ public class AnnotationValidator {
         String[] nsLabels = informer.nsLabels();
         String[] resLabels = informer.resLabels();
 
-        BiConsumer<String[], String> validateLabel = (String[] labels, String name) -> {
-            if (labels == null || labels.length == 0) {
-                log.warn(
-                        "{} are not provided for class {}. If not specified all will be" + " used.",
-                        name,
-                        beanClass.getName());
-            } else {
-                Arrays.asList(labels).forEach(label -> {
-                    String[] splittedLabel = label.split("=");
-                    if (splittedLabel.length != 2) {
-                        throw new MalformedParametersException("Invalid label for "
-                                + label
-                                + "in class "
-                                + beanClass.getName()
-                                + ". Format has to be key=value");
-                    }
-                });
+        Consumer<String[]> validateLabel = (String[] labels) -> Arrays.asList(labels).forEach(label -> {
+            String[] splittedLabel = label.split("=");
+            if (splittedLabel.length != 2) {
+                throw new MalformedParametersException("Invalid label for "
+                        + label
+                        + "in class "
+                        + beanClass.getName()
+                        + ". Format has to be key=value");
             }
-        };
-        validateLabel.accept(nsLabels, "nsLabels (namespace labels)");
-        validateLabel.accept(resLabels, "resLabels (resource labels)");
+        });
+        validateLabel.accept(nsLabels);
+        validateLabel.accept(resLabels);
 
         checkForDuplicateKey(nsLabels, beanClass);
         checkForDuplicateKey(resLabels, beanClass);
     }
 
     private void checkForDuplicateKey(String[] labelValues, Class<?> beanClass) {
-        List<String> keys = Arrays.asList(labelValues).stream()
+        List<String> keys = Arrays.stream(labelValues)
                 .map(value -> value.split("=")[0])
                 .toList();
         Set<String> keySet = new HashSet<>(keys);

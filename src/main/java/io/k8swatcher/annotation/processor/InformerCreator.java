@@ -47,10 +47,9 @@ public class InformerCreator {
             InformerConfiguration informerConfiguration = context.getCfg();
             KubernetesClient client = context.getClient();
 
-            Map<String, String> nsLabels = informerConfiguration.getNsLabels();
             Map<String, String> resLabels = informerConfiguration.getResLabels();
 
-            List<String> namespaces = getNamespaces(client, nsLabels);
+            List<String> namespaces = getNamespaces(client, informerConfiguration);
 
             watchMethods.forEach(watchMethod -> {
                 Class resource = watchMethod.getAnnotation(Watch.class).resource();
@@ -69,11 +68,17 @@ public class InformerCreator {
         return informerList;
     }
 
-    private List<String> getNamespaces(KubernetesClient client, Map<String, String> nsLabels) {
+    private List<String> getNamespaces(KubernetesClient client, InformerConfiguration informerConfiguration) {
+        Map<String, String> nsLabels = informerConfiguration.getNsLabels();
+        List<String> nsNames = informerConfiguration.getNsNames();
+        if (!nsNames.isEmpty()) {
+            return nsNames;
+        }
+
         log.debug("nsLabel={}", nsLabels);
         Function<Namespace, String> namespaceToStringName =
                 namespace -> namespace.getMetadata().getName();
-        if (nsLabels.isEmpty()) {
+        if (nsLabels.isEmpty() && nsNames.isEmpty()) {
             return client.namespaces().list().getItems().stream()
                     .map(namespaceToStringName)
                     .toList();
@@ -134,7 +139,12 @@ public class InformerCreator {
             throw new IllegalArgumentException(
                     "Resync period for class " + bean.getClass().getName() + " must be greater than 1000.");
         }
-        InformerConfiguration newCfg = new InformerConfiguration(nsLabels, resLabels, resyncPeriod, clientName);
+        List<String> nsNames = informerConfiguration.getNsNames();
+        if (nsNames.isEmpty()) {
+            nsNames = Arrays.asList(informer.nsNames());
+        }
+        InformerConfiguration newCfg =
+                new InformerConfiguration(nsLabels, resLabels, resyncPeriod, clientName, nsNames);
 
         return new InformerContext(bean.getClass(), informer, newCfg, kubeClientFactory.getClient(clientName));
     }

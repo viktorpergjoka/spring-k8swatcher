@@ -13,7 +13,7 @@ plugins {
 
 
 group = 'io.k8swatcher'
-version = '0.0.2'
+version = '0.0.3'
 
 java {
     sourceCompatibility = '17'
@@ -84,7 +84,7 @@ signing {
 centralPortal{
     pom {
         name= "Viktor Pergjoka"
-        description="Spring Boot Kubernetes resources Watcher"
+        description="Spring Boot Kubernetes Informer for resources watching"
         url = "https://github.com/viktorpergjoka/spring-k8swatcher"
         licenses{
             license{
