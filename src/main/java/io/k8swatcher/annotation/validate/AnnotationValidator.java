@@ -140,16 +140,17 @@ public class AnnotationValidator {
         String[] nsLabels = informer.nsLabels();
         String[] resLabels = informer.resLabels();
 
-        Consumer<String[]> validateLabel = (String[] labels) -> Arrays.asList(labels).forEach(label -> {
-            String[] splittedLabel = label.split("=");
-            if (splittedLabel.length != 2) {
-                throw new MalformedParametersException("Invalid label for "
-                        + label
-                        + "in class "
-                        + beanClass.getName()
-                        + ". Format has to be key=value");
-            }
-        });
+        Consumer<String[]> validateLabel =
+                (String[] labels) -> Arrays.asList(labels).forEach(label -> {
+                    String[] splittedLabel = label.split("=");
+                    if (splittedLabel.length != 2) {
+                        throw new MalformedParametersException("Invalid label for "
+                                + label
+                                + "in class "
+                                + beanClass.getName()
+                                + ". Format has to be key=value");
+                    }
+                });
         validateLabel.accept(nsLabels);
         validateLabel.accept(resLabels);
 
@@ -158,9 +159,8 @@ public class AnnotationValidator {
     }
 
     private void checkForDuplicateKey(String[] labelValues, Class<?> beanClass) {
-        List<String> keys = Arrays.stream(labelValues)
-                .map(value -> value.split("=")[0])
-                .toList();
+        List<String> keys =
+                Arrays.stream(labelValues).map(value -> value.split("=")[0]).toList();
         Set<String> keySet = new HashSet<>(keys);
         if (keySet.size() < keys.size()) {
             throw new IllegalArgumentException("Duplicate key found in "
