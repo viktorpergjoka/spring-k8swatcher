@@ -11,7 +11,6 @@ import lombok.Setter;
 @AllArgsConstructor
 public class InformerContext {
 
-
     @Setter(AccessLevel.NONE)
     private Class<?> beanClass;
 
