@@ -57,7 +57,8 @@ public class InformerCreator {
                 List<SharedIndexInformer> informers = namespaces.stream()
                         .map(nsName -> (NonNamespaceOperation)
                                 client.resources(resource).inNamespace(nsName))
-                        .map(nsOperation -> createSharedIndexInformer(nsOperation, resLabels))
+                        .map(nsOperation -> createSharedIndexInformer(
+                                nsOperation, resLabels, informerConfiguration.getResyncPeriod()))
                         .map(sharedIndexInformer -> sharedIndexInformer.addEventHandlerWithResyncPeriod(
                                 new IndexInformerResHandler(ctx, watchMethod, beanClass),
                                 informerConfiguration.getResyncPeriod()))
@@ -89,13 +90,13 @@ public class InformerCreator {
     }
 
     private SharedIndexInformer createSharedIndexInformer(
-            NonNamespaceOperation nsOperation, Map<String, String> resLabels) {
+            NonNamespaceOperation nsOperation, Map<String, String> resLabels, long resyncPeriod) {
         log.debug("resLabels={}", resLabels);
         if (resLabels.isEmpty()) {
-            return nsOperation.inform();
+            return nsOperation.runnableInformer(resyncPeriod);
         }
 
-        return ((FilterWatchListDeletable) nsOperation.withLabels(resLabels)).inform();
+        return ((FilterWatchListDeletable) nsOperation.withLabels(resLabels)).runnableInformer(resyncPeriod);
     }
 
     private List<InformerContext> getInformerContextList() {

@@ -15,8 +15,8 @@ import org.springframework.stereotype.Component;
 @SuppressWarnings("rawtypes")
 public class K8InformerEntrypoint {
 
-    private AnnotationValidator validator;
-    private InformerCreator informerCreator;
+    private final AnnotationValidator validator;
+    private final InformerCreator informerCreator;
     private List<SharedIndexInformer> informerList;
 
     public K8InformerEntrypoint(AnnotationValidator validator, InformerCreator informerCreator) {
@@ -29,6 +29,7 @@ public class K8InformerEntrypoint {
     public void onStartUp(ApplicationReadyEvent event) {
         validateAnnotations();
         this.informerList = informerCreator.createInformers();
+        informerList.forEach(SharedIndexInformer::start);
     }
 
     private void validateAnnotations() {
