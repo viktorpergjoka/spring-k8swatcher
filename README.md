@@ -103,10 +103,10 @@ public class MyInformer {
 }
 
 ```
-This a valid example although it is not recommended because this Informer will watch in ALL namespaces for every Pod, every ConfigMap and every Service resources. It needs an user with all the permissions to watch on any namespace for any resource.
+This a valid example although it is not recommended because this Informer will watch in ALL namespaces for every Pod, every ConfigMap and every Service resources. It needs a user with all the permissions to watch on any namespace for any resource.
 <br><br>
 
-The name of the method is not important, whereas the parameter definitions is important.
+The name of the method is not important, whereas the parameter definitions are important.
 The Parameter signature must be the following:
 * Add: (Resource resource)
 * Update: (Resource oldResource, Resource newResource)
@@ -141,14 +141,14 @@ The order will be the following:
 * Annotation value
 * Default value
 
-| Property     | Description                                                                                                                                                                                                                                              | Default value                         |
-|--------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|
-| name         | Name of the referenced configuration in the application.yml.                                                                                                                                                                                             | "default"                             |
-| nsNames      | The name of the namespaces. If there is a namespace foo and foo2 it would be nsNames={"foo", "foo2"}. If nsLabels are used they will be ignored. See [Permissions](#Permissions)   section for details                                                   | ""                                    |
-| nsLabels     | a comma separated list of key=value for defining the namespace labels. When used in application.yml and the key has "/"  it should be wrapped inside "[]" e.g. "[kubernetes.io/metadata.name]" . If no value will be provided, "all" will be used.       | ""                                    |
-| resLabels    | a comma separated list of key=value for defining the resource labels. When used in application.yml and "/" is part of the label e.g. myApp/xy=z it should be wrapped inside "[]" e.g. "[myApp/xy]"   . If no value will be provided, "all" will be used. | ""                                    |
-| resyncPeriod | The resync with the Kubernetes API Server for updating the informer cache. Must be greater than 1000 or an Exception is thrown                                                                                                                           | 1000                                  |
-| clientName   | The name of the Kubernetes Client bean which should be used. Must be a of type io.fabric8.kubernetes.client.KubernetesClient                                                                                                                             | new KubernetesClientBuilder().build() |
+| Property     | Description                                                                                                                                                                                                                                         | Default value                         |
+|--------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|
+| name         | Name of the referenced configuration in the application.yml.                                                                                                                                                                                        | "default"                             |
+| nsNames      | The name of the namespaces. If there is a namespace foo and foo2 it would be nsNames={"foo", "foo2"}. If nsNames are used, nsLabels will be ignored. See [Permissions](#Permissions)   section for details                                          | ""                                    |
+| nsLabels     | a comma separated list of key=value for defining the namespace labels. When used in application.yml and the key has "/"  it should be wrapped inside "[]" e.g. "[kubernetes.io/metadata.name]" . If no value is provided, "all" will be used.       | ""                                    |
+| resLabels    | a comma separated list of key=value for defining the resource labels. When used in application.yml and "/" is part of the label e.g. myApp/xy=z it should be wrapped inside "[]" e.g. "[myApp/xy]"   . If no value is provided, "all" will be used. | ""                                    |
+| resyncPeriod | The resync with the Kubernetes API Server for updating the informer cache. Must be greater than 1000 or an Exception is thrown                                                                                                                      | 1000                                  |
+| clientName   | The name of the Kubernetes Client bean which should be used. Must be a of type io.fabric8.kubernetes.client.KubernetesClient                                                                                                                        | new KubernetesClientBuilder().build() |
 ### Configure via annotation values:
 
 ```
@@ -179,7 +179,11 @@ If you want to explicitly name the namespaces, you would use nsNames instead:
 ```
 @Informer(nsNames = {"foo", "bar"}, resLabels = {"app=foo"}, resyncPeriod = 2000)
 ```
-If *nsNames* is used (non empty), *nsLabels* will be ignored
+This will watch for resources labeled with app=foo in the namespaces with name "foo" and "bar".
+
+
+
+If *nsNames* are used, *nsLabels* will be ignored
 
 
 ### Configuring via application.yml
@@ -310,5 +314,5 @@ k8swatcher:
 
 Depending on which resources you want to watch you have to consider the following:
 * You need ["get", "list", "watch"] verbs on that resource. A Pod cannot be watched if you don't have permissions for it. <br><br>
-* if you use nsLabels e.g. you want to watch for resources in all namespaces that has the labels nsLabels = {"watcher=true"}  that user needs the permission to list all namespaces (like kubectl get ns). This implies that a ClusterRole is associated with that user. So this only works if the user has the appropriate permissions. If you have a user with limited access, for example when you run it within a container inside the cluster (which is recommended) with a service account associated and the service account can not list all namespaces, because it should only operate on his own namespace, you should use nsNames and list the namespace names explicitly. When used with helm .Release.Namespace could be used.
+* if you use nsLabels e.g. you want to watch for resources in all namespaces that has the labels nsLabels = {"watcher=true"}  that user needs the permission to list all namespaces (like kubectl get ns). This implies that a ClusterRole is associated with that user. So this only works if the user has the appropriate permissions. If you have a user with limited access, for example when you run it within a container inside the cluster (which is recommended) with a service account associated and the service account can not list all namespaces, because it should only operate on his own namespace, you should use nsNames and list the namespace names explicitly.
 
