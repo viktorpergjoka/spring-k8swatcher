@@ -137,11 +137,11 @@ Examples:
 
 
  @Watch(event = EventType.DELETE, resource = Pod.class)
- public void delete(Pod pod){}
+ public void deletePod(Pod pod){}
 
 
  @Watch(event = EventType.DELETE, resource = Pod.class)
- public void delete(Pod pod, boolean deletedFinalStateUnknown){}
+ public void podDeleted(Pod deletedPod, boolean deletedFinalStateUnknown){}
 ```
 
 ## Configuration
