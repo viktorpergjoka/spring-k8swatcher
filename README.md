@@ -8,6 +8,20 @@ Spring-K8sWatcher is an easy way to use Kubernetes Informer with Spring Boot onl
 An Informer is a mechanism where you can watch on any Kubernetes Resource for changes (ADD, UPDATE, DELETE) and react to them, e.g. when a Pod is added, or a ConfigMap is modified or even for Custom Resource Definitions.
 Therefore you could build Kubernetes Controllers and Operators with it.
 
+
+## Contents
+
+- [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
+- [Configuration](#configuration)
+  - [Configure via annotation values](#configure-via-annotation-values)
+  - [Configuring via application.yml](#configuring-via-applicationyml)
+  - [Configuring the Kubernetes Client](#configuring-the-kubernetes-client)
+- [Custom Resource Definitions (CRD)](#custom-resource-definitions-crd)
+- [Permissions](#permissions)
+
+
+
 ## Prerequisites
 
 Add dependency:
@@ -141,14 +155,14 @@ The order will be the following:
 * Annotation value
 * Default value
 
-| Property     | Description                                                                                                                                                                                                                                         | Default value                         |
-|--------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|
-| name         | Name of the referenced configuration in the application.yml.                                                                                                                                                                                        | "default"                             |
-| nsNames      | The name of the namespaces. If there is a namespace foo and foo2 it would be nsNames={"foo", "foo2"}. If nsNames are used, nsLabels will be ignored. See [Permissions](#Permissions)   section for details                                          | ""                                    |
-| nsLabels     | a comma separated list of key=value for defining the namespace labels. When used in application.yml and the key has "/"  it should be wrapped inside "[]" e.g. "[kubernetes.io/metadata.name]" . If no value is provided, "all" will be used.       | ""                                    |
+| Property     | Description                                                                                                                                                                                                                                        | Default value                         |
+|--------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|
+| name         | Name of the referenced configuration in the application.yml. See [Configuring via application.yml](#configuring-via-applicationyml)                                                                                                                                                             | "default"                             |
+| nsNames      | The name of the namespaces. If there is a namespace foo and foo2 it would be nsNames={"foo", "foo2"}. If nsNames are used, nsLabels will be ignored. See [Permissions](#Permissions)   section for details                                         | ""                                    |
+| nsLabels     | a comma separated list of key=value for defining the namespace labels. When used in application.yml and the key has "/"  it should be wrapped inside "[]" e.g. "[kubernetes.io/metadata.name]" . If no value is provided, "all" will be used.      | ""                                    |
 | resLabels    | a comma separated list of key=value for defining the resource labels. When used in application.yml and "/" is part of the label e.g. myApp/xy=z it should be wrapped inside "[]" e.g. "[myApp/xy]"   . If no value is provided, "all" will be used. | ""                                    |
-| resyncPeriod | The resync with the Kubernetes API Server for updating the informer cache. Must be greater than 1000 or an Exception is thrown                                                                                                                      | 1000                                  |
-| clientName   | The name of the Kubernetes Client bean which should be used. Must be a of type io.fabric8.kubernetes.client.KubernetesClient                                                                                                                        | new KubernetesClientBuilder().build() |
+| resyncPeriod | The resync with the Kubernetes API Server for updating the informer cache. Must be greater than 1000 or an Exception is thrown                                                                                                                     | 1000                                  |
+| clientName   | The name of the Kubernetes Client bean which should be used. Must be a of type io.fabric8.kubernetes.client.KubernetesClient                                                                                                                       | new KubernetesClientBuilder().build() |
 ### Configure via annotation values:
 
 ```
