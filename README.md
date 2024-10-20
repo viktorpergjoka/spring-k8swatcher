@@ -310,6 +310,52 @@ k8swatcher:
 
 ```
 
+## Custom Resource Definitions (CRD)
+
+As an example we take the example from the official Kubernetes Docs https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/
+
+The Java classes would be the following:
+
+```
+@Group("stable.example.com")
+@Version("v1")
+public class CronTab extends CustomResource<CronTabSpec, CronTabStatus> implements Namespaced { }
+
+
+@JsonDeserialize()
+public class CronTabSpec implements KubernetesResource {
+
+    private String cronSpec;
+    private String image;
+    private int replicas;
+    
+    //getters and setter
+
+}
+
+@JsonDeserialize()
+public class CronTabStatus implements KubernetesResource {
+
+    private String labelSelector;
+    private int replicas;
+    
+    //getters and setter
+}
+
+```
+
+Its then used like any other Kubernetes resource:
+
+```
+    @Watch(event = EventType.ADD, resource = CronTab.class)
+    public void cronTabAdded(CronTab cronTab){
+        String cronSpec = cronTab.getSpec().getCronSpec();
+    }
+
+```
+
+
+
 ## Permissions
 
 Depending on which resources you want to watch you have to consider the following:
