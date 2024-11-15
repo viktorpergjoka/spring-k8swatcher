@@ -1,6 +1,9 @@
 ## CHANGELOG
 
-### 0.0.4 (pending)
+### 0.0.4 (2024-11-15)
+
+#### Dependency Upgrade
+* Fix #7: Dependency Upgrade
 
 ####  Bugs
 * Fix #5: all informer should be started after all are constructed

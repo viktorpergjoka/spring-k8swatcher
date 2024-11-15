@@ -39,7 +39,7 @@ Maven:
 <dependency>
   <groupId>io.k8swatcher</groupId>
   <artifactId>spring-k8swatcher</artifactId>
-  <version>0.0.3</version>
+  <version>0.0.4</version>
 </dependency>
 
 ```
@@ -48,7 +48,7 @@ Gradle:
 
 ```
 implementation 'org.springframework.boot:spring-boot-starter'
-implementation 'io.k8swatcher:spring-k8swatcher:0.0.3'
+implementation 'io.k8swatcher:spring-k8swatcher:0.0.4'
 
 ```
 
@@ -60,7 +60,7 @@ Maven:
 <dependency>
   <groupId>io.k8swatcher</groupId>
   <artifactId>spring-k8swatcher</artifactId>
-  <version>0.0.3</version>
+  <version>0.0.4</version>
   <exclusions>
      <exclusion>
          <groupId>io.fabric8</groupId>
@@ -74,7 +74,7 @@ Maven:
 Gradle:
 
 ```
-implementation ('io.k8swatcher:spring-k8swatcher:0.0.3'){
+implementation ('io.k8swatcher:spring-k8swatcher:0.0.4'){
     exclude group: 'io.fabric8', module: 'kubernetes-client'
 }
 
