@@ -6,7 +6,7 @@ Spring-K8sWatcher
 Spring-K8sWatcher is an easy way to use Kubernetes Informer with Spring Boot only with few annotations. It uses the fabric8 Kubernetes Client.
 
 An Informer is a mechanism where you can watch on any Kubernetes Resource for changes (ADD, UPDATE, DELETE) and react to them, e.g. when a Pod is added, or a ConfigMap is modified or even for Custom Resource Definitions.
-Therefore you could build Kubernetes Controllers and Operators with it.
+Therefore you could build Kubernetes Controllers and Kubernetes Operators with it.
 
 
 ## Contents
@@ -166,7 +166,7 @@ The order will be the following:
 ### Configure via annotation values:
 
 ```
-@Informer(nsLabels = {"istio-injection=enabled"}, resLabels = {"app=foo"}, resyncPeriod = 2000)
+@Informer(nsLabels = {"kubernetes.informer/k8swatcher=enabled"}, resLabels = {"app=foo"}, resyncPeriod = 2000)
 public class MyInformer {
 
     @Watch(event = EventType.ADD, resource = Pod.class)
@@ -186,7 +186,7 @@ public class MyInformer {
 }
 
 ```
-This will create an informer which watches for resources with the label app=foo in the namespaces with the label istio-injection=enabled
+This will create an informer which watches for resources with the label app=foo in the namespaces with the label kubernetes.informer/k8swatcher=enabled
 
 
 If you want to explicitly name the namespaces, you would use nsNames instead:
@@ -223,15 +223,16 @@ public class MyInformer {
 k8swatcher:
     config:
       myConfig:
+        resyncPeriod: 1000
         nsLabels:
-          "[istio-injection]": enabled
+          "[kubernetes.informer/k8swatcher=enabled]": enabled
         resLabels:
           app: spike
           foo: bar
 
 ```
 
-This will watch for all Pods with label app=spike **and** foo=bar in all namespaces which have the label istio-injection=enabled.
+This will watch for all Pods with label app=spike **and** foo=bar in all namespaces which have the label kubernetes.informer/k8swatcher=enabled.
 
 Note that you should write the label keys inside [] in yaml because '/' will be parsed in the application.yaml
 so something like
@@ -239,7 +240,7 @@ so something like
 ```
 ...
         nsLabels:
-          kubernetes.io/metadata.name: foo: enabled
+          kubernetes.io/metadata.name: foo
 ...
 
 ```
@@ -353,7 +354,7 @@ public class CronTabStatus implements KubernetesResource {
     private String labelSelector;
     private int replicas;
     
-    //getters and setter
+    //getters and setters
 }
 
 ```

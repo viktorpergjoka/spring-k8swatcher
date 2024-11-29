@@ -13,13 +13,13 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 @SuppressWarnings("rawtypes")
-public class K8InformerEntrypoint {
+public class InformerEntrypoint {
 
     private final AnnotationValidator validator;
     private final InformerCreator informerCreator;
     private List<SharedIndexInformer> informerList;
 
-    public K8InformerEntrypoint(AnnotationValidator validator, InformerCreator informerCreator) {
+    public InformerEntrypoint(AnnotationValidator validator, InformerCreator informerCreator) {
         this.validator = validator;
         this.informerCreator = informerCreator;
         this.informerList = new ArrayList<>();

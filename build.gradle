@@ -15,6 +15,7 @@ plugins {
 group = 'io.k8swatcher'
 version = '0.0.4'
 
+
 java {
     sourceCompatibility = '17'
     withJavadocJar()
@@ -37,15 +38,21 @@ dependencyManagement {
     }
 }
 
+ext{
+    fabric8Version = '6.13.4'
+}
+
 dependencies {
 
-    api 'io.fabric8:kubernetes-client:6.13.4'
+    api "io.fabric8:kubernetes-client:${fabric8Version}"
     implementation 'jakarta.annotation:jakarta.annotation-api:3.0.0'
     implementation 'org.springframework.boot:spring-boot-autoconfigure'
     implementation 'org.springframework:spring-context-support'
     implementation 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation "io.fabric8:kubernetes-server-mock:${fabric8Version}"
+    testImplementation "io.fabric8:mockwebserver:${fabric8Version}"
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
