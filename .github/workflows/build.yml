@@ -21,6 +21,11 @@ jobs:
         uses: helm/kind-action@v1
 
   build:
+    on:
+      workflow_run:
+        workflows: [create-cluster]
+        types:
+          - completed
 
     runs-on: ubuntu-latest
     permissions:
