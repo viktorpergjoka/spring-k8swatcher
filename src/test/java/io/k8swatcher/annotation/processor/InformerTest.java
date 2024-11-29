@@ -18,7 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 
-//Integration Test
+// Integration Test
 @SpringBootTest(classes = {InformerTestConfig.class})
 @EnableKubernetesMockClient(https = false)
 public class InformerTest {
