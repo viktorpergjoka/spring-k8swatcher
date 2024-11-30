@@ -17,11 +17,14 @@ jobs:
   create-cluster:
     runs-on: ubuntu-latest
     steps:
+      - name: checkout@scm
+        uses: actions/checkout@main
+
       - name: setup@kindconfig
         run: |
-          kind_in="${{ github.workspace }}/github/config/kind.yml.in"
-          kind_out="${{ github.workspace }}/github/config/kind.yml"
-          hostip=$(sh ${{ github.workspace }}/github/scripts/get-host-ip.sh)
+          kind_in="${{ github.workspace }}/.github/config/kind.yml.in"
+          kind_out="${{ github.workspace }}/.github/config/kind.yml"
+          hostip=$(sh ${{ github.workspace }}/.github/scripts/get-host-ip.sh)
           sed "s/127.0.0.1/$hostip/g" $kind_in > $kind_out
 
       - name: setup@kubernetes
@@ -31,7 +34,7 @@ jobs:
 
       - name: setup@kubeconfig
         run: |
-          hostip=$(sh ${{ github.workspace }}/github/scripts/get-host-ip.sh)
+          hostip=$(sh ${{ github.workspace }}/.github/scripts/get-host-ip.sh)
           sed "s/127.0.0.1/$hostip/g" $HOME/.kube/config > ${{ github.workspace }}/kubeconfig.yml          
 
   build:
