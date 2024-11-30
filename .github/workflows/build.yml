@@ -17,15 +17,22 @@ jobs:
   create-cluster:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
-      - uses: engineerd/setup-kind@v0.6.0
-        with:
-          version: "v0.24.0"
-      - name: Testing
+      - name: setup@kindconfig
         run: |
-          kubectl cluster-info
-          kubectl version
-          kubectl get pods -n kube-system
+          kind_in="${{ github.workspace }}/.github/config/kind.yml.in"
+          kind_out="${{ github.workspace }}/.github/config/kind.yml"
+          hostip=$(sh .github/scripts/get-host-ip.sh)
+          sed "s/127.0.0.1/$hostip/g" $kind_in > $kind_out
+
+      - name: setup@kubernetes
+        uses: engineerd/setup-kind@v0.5.0
+        with:
+          config: .github/config/kind.yml
+
+      - name: setup@kubeconfig
+        run: |
+          hostip=$(sh .github/scripts/get-host-ip.sh)
+          sed "s/127.0.0.1/$hostip/g" $HOME/.kube/config > ${{ github.workspace }}/kubeconfig.yml          
 
   build:
     needs: create-cluster
