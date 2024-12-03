@@ -225,7 +225,7 @@ k8swatcher:
       myConfig:
         resyncPeriod: 1000
         nsLabels:
-          "[kubernetes.informer/k8swatcher=enabled]": enabled
+          "[kubernetes.informer/k8swatcher]": enabled
         resLabels:
           app: spike
           foo: bar
@@ -299,11 +299,11 @@ k8swatcher:
 ```
 If nsNames is used, nsLabels will be ignored.
 
-## Configuring the Kubernetes Client
+## Configuring the Kubernetes client
 
-By default the default Kubernetes Client will be created (see https://github.com/fabric8io/kubernetes-client?tab=readme-ov-file#creating-a-client)
+By default the default Kubernetes client will be created (see https://github.com/fabric8io/kubernetes-client?tab=readme-ov-file#creating-a-client)
 
-If you want to provide your own Client you can define a Bean:
+If you want to provide your own client you can define a Bean:
 
 ```
 @Bean("myClient")

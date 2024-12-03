@@ -89,7 +89,8 @@ signing {
 centralPortal{
     pom {
         name= "Viktor Pergjoka"
-        description="Spring Boot Kubernetes Informer for resources watching"
+        description="Spring Boot library for watching Kubernetes resources with Informers. Create Kubernetes Controllers" +
+                " and Kubernetes Operators"
         url = "https://github.com/viktorpergjoka/spring-k8swatcher"
         licenses{
             license{
