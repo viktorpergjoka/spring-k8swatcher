@@ -60,16 +60,6 @@ public class AnnotationValidatorTest {
     }
 
     @Test
-    public void testInvalidResyncPeriod() {
-        Mockito.when(ctx.getBeansWithAnnotation(Informer.class))
-                .thenReturn(
-                        Map.of("invalidResyncPeriodTestBean", this.informerBeanMap.get("invalidResyncPeriodTestBean")));
-        validator.init();
-
-        assertThrows(IllegalArgumentException.class, () -> validator.validateInformerAnnotations());
-    }
-
-    @Test
     public void testDuplicateLabel() {
         Mockito.when(ctx.getBeansWithAnnotation(Informer.class))
                 .thenReturn(Map.of("duplicateNsLabelTestBean", this.informerBeanMap.get("duplicateNsLabelTestBean")));

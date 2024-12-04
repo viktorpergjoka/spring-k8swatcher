@@ -1,5 +1,10 @@
 ## CHANGELOG
 
+0.0.5 (pending)
+
+####  Bugs
+* Fix #9: Remove Exception when resyncPeriod
+
 ### 0.0.4 (2024-11-15)
 
 #### Dependency Upgrade

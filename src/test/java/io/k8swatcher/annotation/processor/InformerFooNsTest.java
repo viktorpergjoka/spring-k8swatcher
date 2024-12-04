@@ -21,7 +21,7 @@ import org.springframework.context.ApplicationContext;
 // Integration Test
 @SpringBootTest(classes = {InformerTestConfig.class})
 @EnableKubernetesMockClient(https = false)
-public class InformerTest {
+public class InformerFooNsTest {
 
     @Autowired
     private ApplicationContext testCtx;
@@ -65,7 +65,24 @@ public class InformerTest {
     }
 
     @Test
-    void testPodInformer() throws InterruptedException {
+    void testPodAllInformer() throws InterruptedException {
+        assertEquals(resMaps.size(), 0);
+        Pod pod = client.pods()
+                .load(getClass().getResourceAsStream("/test-pod.yml"))
+                .item();
+        client.pods().resource(pod).serverSideApply();
+        client.pods().resource(pod).waitUntilReady(5, TimeUnit.MINUTES);
+
+        assertEquals("added", resMaps.get("ADD"));
+
+        client.pods().inNamespace("foo").delete();
+        Thread.sleep(5000);
+        assertEquals("updated", resMaps.get("UPDATE"));
+        assertEquals("deleted", resMaps.get("DELETE"));
+    }
+
+    @Test
+    void testPodNsFooInformer() throws InterruptedException {
         assertEquals(resMaps.size(), 0);
         Pod pod = client.pods()
                 .load(getClass().getResourceAsStream("/test-pod.yml"))
