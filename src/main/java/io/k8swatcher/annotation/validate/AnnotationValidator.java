@@ -43,7 +43,6 @@ public class AnnotationValidator {
                 throw new RuntimeException("Could not find Kubernetes client with name " + informer.clientName());
             }
             validateLabels(informer, beanClass);
-            validateResyncPeriod(informer, beanClass);
         }
     }
 
@@ -167,13 +166,6 @@ public class AnnotationValidator {
                     + beanClass.getName()
                     + ". You cannot define the same key. You defined the following keys: "
                     + keys.stream().sorted());
-        }
-    }
-
-    private void validateResyncPeriod(Informer informer, Class<?> beanClass) {
-        if (informer.resyncPeriod() < 1000) {
-            throw new IllegalArgumentException(
-                    "Resync period for class " + beanClass.getName() + " must be greater than 1000.");
         }
     }
 }

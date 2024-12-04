@@ -137,8 +137,11 @@ public class InformerCreator {
             resyncPeriod = informer.resyncPeriod();
         }
         if (resyncPeriod < 1000) {
-            throw new IllegalArgumentException(
-                    "Resync period for class " + bean.getClass().getName() + " must be greater than 1000.");
+            log.warn(
+                    "Resync period {} for class {} is too small. Changing it to minimal allowed value of 1000",
+                    resyncPeriod,
+                    bean.getClass().getName());
+            resyncPeriod = 1000L;
         }
         List<String> nsNames = informerConfiguration.getNsNames();
         if (nsNames.isEmpty()) {
