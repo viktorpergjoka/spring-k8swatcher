@@ -4,6 +4,7 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientBuilder;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -20,5 +21,10 @@ public class InformerTestConfig {
     @Bean
     public Map<String, String> resMaps() {
         return new HashMap<>();
+    }
+
+    @Bean
+    public AtomicInteger eventsCount() {
+        return new AtomicInteger(0);
     }
 }
