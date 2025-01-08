@@ -1,6 +1,6 @@
 ## CHANGELOG
 
-1.0.1 (pending)
+### 1.0.1 (2025-01-08)
 
 * Fix #11: implement cache for the events
 
