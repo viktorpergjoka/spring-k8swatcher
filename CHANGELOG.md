@@ -1,6 +1,11 @@
 ## CHANGELOG
 
-0.0.5 (pending)
+1.0.1 (pending)
+
+* Fix #11: implement cache for the events
+
+#### Dependency Upgrade
+* Fix #12: Dependency Upgrade
 
 ####  Bugs
 * Fix #9: Remove Exception when resyncPeriod
