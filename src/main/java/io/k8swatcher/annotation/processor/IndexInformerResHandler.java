@@ -28,36 +28,36 @@ class IndexInformerResHandler implements ResourceEventHandler {
 
     @Override
     public void onAdd(Object obj) {
-        executor.execute(() -> {
-            if (watchMethod.getAnnotation(Watch.class).event().equals(EventType.ADD)) {
+        if (watchMethod.getAnnotation(Watch.class).event().equals(EventType.ADD)) {
+            executor.execute(() -> {
                 try {
                     Object instance = ctx.getBean(beanClass);
                     ReflectionUtils.invokeMethod(watchMethod, instance, obj);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-            }
-        });
+            });
+        }
     }
 
     @Override
     public void onUpdate(Object oldObj, Object newObj) {
-        executor.execute(() -> {
-            if (watchMethod.getAnnotation(Watch.class).event().equals(EventType.UPDATE)) {
+        if (watchMethod.getAnnotation(Watch.class).event().equals(EventType.UPDATE)) {
+            executor.execute(() -> {
                 try {
                     Object instance = ctx.getBean(beanClass);
                     ReflectionUtils.invokeMethod(watchMethod, instance, oldObj, newObj);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-            }
-        });
+            });
+        }
     }
 
     @Override
     public void onDelete(Object obj, boolean deletedFinalStateUnknown) {
-        executor.execute(() -> {
-            if (watchMethod.getAnnotation(Watch.class).event().equals(EventType.DELETE)) {
+        if (watchMethod.getAnnotation(Watch.class).event().equals(EventType.DELETE)) {
+            executor.execute(() -> {
                 try {
                     Object instance = ctx.getBean(beanClass);
                     int parameterCount = watchMethod.getParameterCount();
@@ -69,7 +69,7 @@ class IndexInformerResHandler implements ResourceEventHandler {
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-            }
-        });
+            });
+        }
     }
 }
