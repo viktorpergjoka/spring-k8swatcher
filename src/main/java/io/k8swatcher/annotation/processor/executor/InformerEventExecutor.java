@@ -6,8 +6,7 @@ import lombok.Getter;
 
 /**
  * <br>
- * This is modified version of https://github.com/fabric8io/kubernetes-client/blob/076a981c9845c691a3d45a727fd48e03377abe8f/kubernetes-client/src/main/java/io/fabric8/kubernetes/client/utils/internal/SerialExecutor.java
- * In this modified version the tasks are executed in the order they are added, but with the addition that the next tasks waits till the previous one has finished
+ * This is a modified version of https://github.com/fabric8io/kubernetes-client/blob/076a981c9845c691a3d45a727fd48e03377abe8f/kubernetes-client/src/main/java/io/fabric8/kubernetes/client/utils/internal/SerialExecutor.java
  * <br>
  */
 public class InformerEventExecutor implements Executor {
@@ -41,7 +40,7 @@ public class InformerEventExecutor implements Executor {
                 synchronized (threadLock) {
                     thread = Thread.currentThread();
                 }
-                CompletableFuture.runAsync(r).thenRun(this::scheduleNext);
+                CompletableFuture.runAsync(r);
             } catch (Throwable t) {
                 thread.getUncaughtExceptionHandler().uncaughtException(thread, t);
             } finally {
