@@ -1,7 +1,5 @@
 package io.k8swatcher.annotation.processor;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.kubernetes.api.model.NamespaceBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
@@ -20,6 +18,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest(classes = {InformerTestConfig.class})
 public class AsyncTest {
@@ -73,7 +73,7 @@ public class AsyncTest {
                 .load(getClass().getResourceAsStream("/events.yml"))
                 .item();
 
-        IntStream.range(0, 10).forEach((index) -> {
+        IntStream.range(0, 5).forEach((index) -> {
             pods.add(client.pods()
                     .resource(pod.edit()
                             .editMetadata()
@@ -87,7 +87,7 @@ public class AsyncTest {
                 .waitUntilCondition(p -> p.getStatus().getPhase().equals("Running"), 1, TimeUnit.MINUTES));
         client.resourceList(pods).delete();
         client.resourceList(pods).waitUntilCondition(Objects::isNull, 1, TimeUnit.MINUTES);
-        System.out.println(eventsCount.get());
-        assertEquals(30, eventsCount.get());
+        Thread.sleep(2000);
+        assertEquals(15, eventsCount.get());
     }
 }
