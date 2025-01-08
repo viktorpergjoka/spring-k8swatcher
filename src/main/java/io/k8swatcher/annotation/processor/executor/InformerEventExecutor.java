@@ -21,9 +21,7 @@ public class InformerEventExecutor implements Executor {
     @Override
     public synchronized void execute(final Runnable r) {
         tasks.offer(() -> {
-            System.out.println("future before");
             CompletableFuture.runAsync(r);
-            System.out.println("future after");
             scheduleNext();
         });
         if (active == null) {
