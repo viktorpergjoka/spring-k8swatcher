@@ -1,5 +1,10 @@
 ## CHANGELOG
 
+### 1.0.2 (2025-01-08)
+
+#### Dependency Downgrade
+* Fix #14: downgrade fabric8 from 7.0.1 to 6.13.4
+
 ### 1.0.1 (2025-01-08)
 
 * Fix #11: implement cache for the events
