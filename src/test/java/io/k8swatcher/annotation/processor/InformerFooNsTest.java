@@ -5,8 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import io.fabric8.kubernetes.api.model.*;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.informers.SharedIndexInformer;
-import io.fabric8.kubernetes.client.server.mock.EnableKubernetesMockClient;
-import io.fabric8.kubernetes.client.server.mock.KubernetesMockServer;
 import io.k8swatcher.annotation.cfg.InformerConfigurationProperty;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +18,6 @@ import org.springframework.context.ApplicationContext;
 
 // Integration Test
 @SpringBootTest(classes = {InformerTestConfig.class})
-@EnableKubernetesMockClient(https = false)
 public class InformerFooNsTest {
 
     @Autowired
@@ -29,8 +26,6 @@ public class InformerFooNsTest {
     private KubeClientFactory clientFactory;
 
     private InformerCreator informerCreator;
-
-    private KubernetesMockServer server;
 
     private KubernetesClient client;
 
