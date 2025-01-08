@@ -8,7 +8,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 
 public class InformerEventExecutor implements Executor {
 
-    private final Queue<Runnable> tasks = new LinkedBlockingDeque<>();
+    private final Queue<Runnable> tasks;
 
     private final ExecutorService executor;
 
@@ -16,12 +16,13 @@ public class InformerEventExecutor implements Executor {
 
     public InformerEventExecutor(ExecutorService executor) {
         this.executor = executor;
+        this.tasks = new LinkedBlockingDeque<>();
     }
 
     @Override
     public synchronized void execute(final Runnable r) {
         tasks.offer(() -> {
-            CompletableFuture.runAsync(r);
+            CompletableFuture.runAsync(r); // add to ForkJoinPool
             scheduleNext();
         });
         if (active == null) {
