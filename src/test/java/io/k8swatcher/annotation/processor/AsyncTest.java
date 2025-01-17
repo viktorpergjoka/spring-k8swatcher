@@ -19,6 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 
+import static org.junit.Assert.assertEquals;
+
 @SpringBootTest(classes = {InformerTestConfig.class})
 public class AsyncTest {
 
@@ -71,7 +73,7 @@ public class AsyncTest {
                 .load(getClass().getResourceAsStream("/events.yml"))
                 .item();
 
-        IntStream.range(0, 5).forEach((index) -> {
+        IntStream.range(0, 2).forEach((index) -> {
             pods.add(client.pods()
                     .resource(pod.edit()
                             .editMetadata()
@@ -85,6 +87,7 @@ public class AsyncTest {
                 .waitUntilCondition(p -> p.getStatus().getPhase().equals("Running"), 1, TimeUnit.MINUTES));
         client.resourceList(pods).delete();
         client.resourceList(pods).waitUntilCondition(Objects::isNull, 1, TimeUnit.MINUTES);
-        // assertEquals(15, eventsCount.get());
+        Thread.sleep(2000);
+        assertEquals(6, eventsCount.get());
     }
 }
