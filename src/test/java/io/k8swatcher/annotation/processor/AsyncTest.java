@@ -1,5 +1,7 @@
 package io.k8swatcher.annotation.processor;
 
+import static org.junit.Assert.assertEquals;
+
 import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.kubernetes.api.model.NamespaceBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
@@ -18,8 +20,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
-
-import static org.junit.Assert.assertEquals;
 
 @SpringBootTest(classes = {InformerTestConfig.class})
 public class AsyncTest {
