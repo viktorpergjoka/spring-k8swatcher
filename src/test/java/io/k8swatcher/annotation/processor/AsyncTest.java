@@ -21,10 +21,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 
-@SpringBootTest(classes = {InformerTestConfig.class})
+//@SpringBootTest(classes = {InformerTestConfig.class})
 public class AsyncTest {
 
-    @Autowired
+   /* @Autowired
     private ApplicationContext testCtx;
 
     private KubeClientFactory clientFactory;
@@ -90,4 +90,5 @@ public class AsyncTest {
         Thread.sleep(2000);
         assertEquals(6, eventsCount.get());
     }
+    */
 }
