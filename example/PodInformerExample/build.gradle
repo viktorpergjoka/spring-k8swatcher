@@ -21,7 +21,6 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     implementation 'io.k8swatcher:spring-k8swatcher:1.0.2'
-    implementation 'io.fabric8:kubernetes-client:6.13.4'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
