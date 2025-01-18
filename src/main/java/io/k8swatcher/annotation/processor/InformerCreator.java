@@ -11,10 +11,7 @@ import io.k8swatcher.annotation.cfg.InformerConfiguration;
 import io.k8swatcher.annotation.cfg.InformerConfigurationProperty;
 import io.k8swatcher.annotation.cfg.InformerContext;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
@@ -49,7 +46,7 @@ public class InformerCreator {
 
             Map<String, String> resLabels = informerConfiguration.getResLabels();
 
-            List<String> namespaces = getNamespaces(client, informerConfiguration);
+            Set<String> namespaces = getNamespaces(client, informerConfiguration);
 
             watchMethods.forEach(watchMethod -> {
                 Class resource = watchMethod.getAnnotation(Watch.class).resource();
@@ -69,9 +66,9 @@ public class InformerCreator {
         return informerList;
     }
 
-    private List<String> getNamespaces(KubernetesClient client, InformerConfiguration informerConfiguration) {
+    private Set<String> getNamespaces(KubernetesClient client, InformerConfiguration informerConfiguration) {
         Map<String, String> nsLabels = informerConfiguration.getNsLabels();
-        List<String> nsNames = informerConfiguration.getNsNames();
+        Set<String> nsNames = informerConfiguration.getNsNames();
         if (!nsNames.isEmpty()) {
             return nsNames;
         }
@@ -82,11 +79,11 @@ public class InformerCreator {
         if (nsLabels.isEmpty() && nsNames.isEmpty()) {
             return client.namespaces().list().getItems().stream()
                     .map(namespaceToStringName)
-                    .toList();
+                    .collect(Collectors.toSet());
         }
         return client.namespaces().withLabels(nsLabels).list().getItems().stream()
                 .map(namespaceToStringName)
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
     private SharedIndexInformer createSharedIndexInformer(
@@ -143,9 +140,9 @@ public class InformerCreator {
                     bean.getClass().getName());
             resyncPeriod = 1000L;
         }
-        List<String> nsNames = informerConfiguration.getNsNames();
+        Set<String> nsNames = informerConfiguration.getNsNames();
         if (nsNames.isEmpty()) {
-            nsNames = Arrays.asList(informer.nsNames());
+            nsNames = Set.of(informer.nsNames());
         }
         InformerConfiguration newCfg =
                 new InformerConfiguration(nsLabels, resLabels, resyncPeriod, clientName, nsNames);
