@@ -24,8 +24,7 @@ public class PodInformer {
 
     @Watch(event = EventType.UPDATE, resource = Pod.class)
     public void updated(Pod oldPod, Pod newPod){
-        if ((oldPod.getStatus().getPhase().equals("Running")
-                && newPod.getStatus().getPhase().equals("Running"))
+        if (newPod.getStatus().getPhase().equals("Running")
                 && (!oldPod.getMetadata()
                 .getResourceVersion()
                 .equals(newPod.getMetadata().getResourceVersion()))) {
