@@ -138,6 +138,7 @@ public class AnnotationValidator {
     private void validateLabels(Informer informer, Class<?> beanClass) {
         String[] nsLabels = informer.nsLabels();
         String[] resLabels = informer.resLabels();
+        String[] nsNames = informer.nsNames();
 
         Consumer<String[]> validateLabel =
                 (String[] labels) -> Arrays.asList(labels).forEach(label -> {
@@ -153,6 +154,7 @@ public class AnnotationValidator {
         validateLabel.accept(nsLabels);
         validateLabel.accept(resLabels);
 
+        checkForDuplicateKey(nsNames, beanClass);
         checkForDuplicateKey(nsLabels, beanClass);
         checkForDuplicateKey(resLabels, beanClass);
     }
@@ -165,7 +167,7 @@ public class AnnotationValidator {
             throw new IllegalArgumentException("Duplicate key found in "
                     + beanClass.getName()
                     + ". You cannot define the same key. You defined the following keys: "
-                    + keys.stream().sorted());
+                    + keys.stream().sorted().toList());
         }
     }
 }
