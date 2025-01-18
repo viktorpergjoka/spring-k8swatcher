@@ -50,7 +50,6 @@ public class InformerCreator {
 
             watchMethods.forEach(watchMethod -> {
                 Class resource = watchMethod.getAnnotation(Watch.class).resource();
-
                 List<SharedIndexInformer> informers = namespaces.stream()
                         .map(nsName -> (NonNamespaceOperation)
                                 client.resources(resource).inNamespace(nsName))
@@ -62,6 +61,11 @@ public class InformerCreator {
                         .toList();
                 informerList.addAll(informers);
             });
+            if (namespaces.isEmpty()) {
+                log.error("No namespaces found with labels {}.", informerConfiguration.getNsLabels());
+            } else {
+                log.info("watching namespaces {}", namespaces);
+            }
         });
         return informerList;
     }

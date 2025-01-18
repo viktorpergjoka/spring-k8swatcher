@@ -12,13 +12,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.ApplicationContext;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest(classes = {ValidateAnnotationTestConfig.class})
 public class AnnotationValidatorTest {
 
-    @MockBean
+    @MockitoBean
     private ApplicationContext ctx;
 
     @Autowired
@@ -63,6 +63,15 @@ public class AnnotationValidatorTest {
     public void testDuplicateLabel() {
         Mockito.when(ctx.getBeansWithAnnotation(Informer.class))
                 .thenReturn(Map.of("duplicateNsLabelTestBean", this.informerBeanMap.get("duplicateNsLabelTestBean")));
+        validator.init();
+
+        assertThrows(IllegalArgumentException.class, () -> validator.validateInformerAnnotations());
+    }
+
+    @Test
+    public void testDuplicateNsNames() {
+        Mockito.when(ctx.getBeansWithAnnotation(Informer.class))
+                .thenReturn(Map.of("duplicateNsNamesTestBean", this.informerBeanMap.get("duplicateNsNamesTestBean")));
         validator.init();
 
         assertThrows(IllegalArgumentException.class, () -> validator.validateInformerAnnotations());

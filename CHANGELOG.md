@@ -1,5 +1,10 @@
 ## CHANGELOG
 
+### 1.0.3 (Pending)
+
+####  Bugs
+* Fix #16: informers shutdown with no error message when no namespace with nsLabel exists
+
 ### 1.0.2 (2025-01-08)
 
 #### Dependency Downgrade
