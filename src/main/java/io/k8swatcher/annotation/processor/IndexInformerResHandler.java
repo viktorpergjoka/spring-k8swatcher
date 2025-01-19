@@ -4,15 +4,14 @@ import io.fabric8.kubernetes.client.informers.ResourceEventHandler;
 import io.fabric8.kubernetes.client.utils.internal.SerialExecutor;
 import io.k8swatcher.annotation.EventType;
 import io.k8swatcher.annotation.Watch;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationContext;
-import org.springframework.util.ReflectionUtils;
-
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationContext;
+import org.springframework.util.ReflectionUtils;
 
 @Slf4j
 @SuppressWarnings("rawtypes")
