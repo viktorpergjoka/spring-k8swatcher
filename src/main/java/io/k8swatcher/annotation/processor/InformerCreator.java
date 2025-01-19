@@ -1,5 +1,6 @@
 package io.k8swatcher.annotation.processor;
 
+import io.fabric8.kubernetes.api.model.KubernetesResource;
 import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
@@ -37,26 +38,24 @@ public class InformerCreator {
         informerContextList.forEach(context -> {
             Class<?> beanClass = context.getBeanClass();
             Method[] methods = beanClass.getMethods();
-            List<Method> watchMethods = Arrays.stream(methods)
+            Map<? extends Class<? extends KubernetesResource>, List<Method>> watchMethods = Arrays.stream(methods)
                     .filter(method -> method.isAnnotationPresent(Watch.class))
-                    .toList();
+                    .collect(Collectors.groupingBy(
+                            method -> method.getAnnotation(Watch.class).resource()));
 
             InformerConfiguration informerConfiguration = context.getCfg();
             KubernetesClient client = context.getClient();
-
+            Set<String> namespaces = getNamespaces(client, informerConfiguration);
             Map<String, String> resLabels = informerConfiguration.getResLabels();
 
-            Set<String> namespaces = getNamespaces(client, informerConfiguration);
-
-            watchMethods.forEach(watchMethod -> {
-                Class resource = watchMethod.getAnnotation(Watch.class).resource();
+            watchMethods.keySet().forEach(resource -> {
                 List<SharedIndexInformer> informers = namespaces.stream()
                         .map(nsName -> (NonNamespaceOperation)
-                                client.resources(resource).inNamespace(nsName))
+                                client.resources((Class) resource).inNamespace(nsName))
                         .map(nsOperation -> createSharedIndexInformer(
                                 nsOperation, resLabels, informerConfiguration.getResyncPeriod()))
                         .map(sharedIndexInformer -> sharedIndexInformer.addEventHandlerWithResyncPeriod(
-                                new IndexInformerResHandler(ctx, watchMethod, beanClass),
+                                new IndexInformerResHandler(ctx, watchMethods.get(resource), beanClass),
                                 informerConfiguration.getResyncPeriod()))
                         .toList();
                 informerList.addAll(informers);

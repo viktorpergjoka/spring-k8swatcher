@@ -5,7 +5,10 @@ import io.k8swatcher.annotation.EventType;
 import io.k8swatcher.annotation.Watch;
 import io.k8swatcher.annotation.processor.executor.InformerEventExecutor;
 import java.lang.reflect.Method;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.ReflectionUtils;
@@ -15,20 +18,21 @@ import org.springframework.util.ReflectionUtils;
 class IndexInformerResHandler implements ResourceEventHandler {
 
     private final ApplicationContext ctx;
-    private final Method watchMethod;
     private final Class<?> beanClass;
+    private Map<EventType, List<Method>> methods;
     private InformerEventExecutor executor;
 
-    public IndexInformerResHandler(ApplicationContext ctx, Method watchMethod, Class<?> beanClass) {
+    public IndexInformerResHandler(ApplicationContext ctx, List<Method> watchMethods, Class<?> beanClass) {
         this.ctx = ctx;
-        this.watchMethod = watchMethod;
         this.beanClass = beanClass;
+        this.methods = watchMethods.stream().collect(Collectors.groupingBy(method -> method.getAnnotation(Watch.class)
+                .event()));
         this.executor = new InformerEventExecutor(Executors.newSingleThreadExecutor());
     }
 
     @Override
     public void onAdd(Object obj) {
-        if (watchMethod.getAnnotation(Watch.class).event().equals(EventType.ADD)) {
+        methods.get(EventType.ADD).forEach(watchMethod -> {
             executor.execute(() -> {
                 try {
                     Object instance = ctx.getBean(beanClass);
@@ -37,12 +41,12 @@ class IndexInformerResHandler implements ResourceEventHandler {
                     throw new RuntimeException(e);
                 }
             });
-        }
+        });
     }
 
     @Override
     public void onUpdate(Object oldObj, Object newObj) {
-        if (watchMethod.getAnnotation(Watch.class).event().equals(EventType.UPDATE)) {
+        methods.get(EventType.UPDATE).forEach(watchMethod -> {
             executor.execute(() -> {
                 try {
                     Object instance = ctx.getBean(beanClass);
@@ -51,12 +55,12 @@ class IndexInformerResHandler implements ResourceEventHandler {
                     throw new RuntimeException(e);
                 }
             });
-        }
+        });
     }
 
     @Override
     public void onDelete(Object obj, boolean deletedFinalStateUnknown) {
-        if (watchMethod.getAnnotation(Watch.class).event().equals(EventType.DELETE)) {
+        methods.get(EventType.DELETE).forEach(watchMethod -> {
             executor.execute(() -> {
                 try {
                     Object instance = ctx.getBean(beanClass);
@@ -70,6 +74,6 @@ class IndexInformerResHandler implements ResourceEventHandler {
                     throw new RuntimeException(e);
                 }
             });
-        }
+        });
     }
 }
