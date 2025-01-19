@@ -32,36 +32,39 @@ class IndexInformerResHandler implements ResourceEventHandler {
 
     @Override
     public void onAdd(Object obj) {
-        methods.get(EventType.ADD).forEach(watchMethod -> {
-            executor.execute(() -> {
+        List<Method> addMethods = methods.get(EventType.ADD);
+        if (addMethods != null) {
+            addMethods.forEach(watchMethod -> executor.execute(() -> {
                 try {
                     Object instance = ctx.getBean(beanClass);
                     ReflectionUtils.invokeMethod(watchMethod, instance, obj);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-            });
-        });
+            }));
+        }
     }
 
     @Override
     public void onUpdate(Object oldObj, Object newObj) {
-        methods.get(EventType.UPDATE).forEach(watchMethod -> {
-            executor.execute(() -> {
+        List<Method> updateMethods = methods.get(EventType.UPDATE);
+        if (updateMethods != null) {
+            updateMethods.forEach(watchMethod -> executor.execute(() -> {
                 try {
                     Object instance = ctx.getBean(beanClass);
                     ReflectionUtils.invokeMethod(watchMethod, instance, oldObj, newObj);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-            });
-        });
+            }));
+        }
     }
 
     @Override
     public void onDelete(Object obj, boolean deletedFinalStateUnknown) {
-        methods.get(EventType.DELETE).forEach(watchMethod -> {
-            executor.execute(() -> {
+        List<Method> deleteMethods = methods.get(EventType.DELETE);
+        if (deleteMethods != null) {
+            deleteMethods.forEach(watchMethod -> executor.execute(() -> {
                 try {
                     Object instance = ctx.getBean(beanClass);
                     int parameterCount = watchMethod.getParameterCount();
@@ -73,7 +76,7 @@ class IndexInformerResHandler implements ResourceEventHandler {
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-            });
-        });
+            }));
+        }
     }
 }
