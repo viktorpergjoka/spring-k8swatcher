@@ -1,9 +1,12 @@
 ## CHANGELOG
 
-### 1.0.3 (Pending)
+### 1.0.3 (2025-01-19)
 
 ####  Bugs
 * Fix #16: informers shutdown with no error message when no namespace with nsLabel exists
+
+#### Enhancement
+* Fix #17: improve informer creation when same resources are watched
 
 ### 1.0.2 (2025-01-08)
 
