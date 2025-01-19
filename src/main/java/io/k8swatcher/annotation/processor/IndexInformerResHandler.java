@@ -1,17 +1,18 @@
 package io.k8swatcher.annotation.processor;
 
 import io.fabric8.kubernetes.client.informers.ResourceEventHandler;
+import io.fabric8.kubernetes.client.utils.internal.SerialExecutor;
 import io.k8swatcher.annotation.EventType;
 import io.k8swatcher.annotation.Watch;
-import io.k8swatcher.annotation.processor.executor.InformerEventExecutor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationContext;
+import org.springframework.util.ReflectionUtils;
+
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationContext;
-import org.springframework.util.ReflectionUtils;
 
 @Slf4j
 @SuppressWarnings("rawtypes")
@@ -20,14 +21,14 @@ class IndexInformerResHandler implements ResourceEventHandler {
     private final ApplicationContext ctx;
     private final Class<?> beanClass;
     private Map<EventType, List<Method>> methods;
-    private InformerEventExecutor executor;
+    private SerialExecutor executor;
 
     public IndexInformerResHandler(ApplicationContext ctx, List<Method> watchMethods, Class<?> beanClass) {
         this.ctx = ctx;
         this.beanClass = beanClass;
         this.methods = watchMethods.stream().collect(Collectors.groupingBy(method -> method.getAnnotation(Watch.class)
                 .event()));
-        this.executor = new InformerEventExecutor(Executors.newSingleThreadExecutor());
+        this.executor = new SerialExecutor(Executors.newSingleThreadExecutor());
     }
 
     @Override
