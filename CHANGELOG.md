@@ -1,5 +1,10 @@
 ## CHANGELOG
 
+### 1.0.4 (2025-03-14)
+
+#### Bugs
+* Fix #14: informers are shutting down immediately when vert.x is used as http client 
+
 ### 1.0.3 (2025-01-19)
 
 ####  Bugs

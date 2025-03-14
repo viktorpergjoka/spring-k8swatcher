@@ -30,6 +30,11 @@ public class InformerEntrypoint {
         validateAnnotations();
         this.informerList = informerCreator.createInformers();
         informerList.forEach(SharedIndexInformer::start);
+
+        boolean isRunning = informerList.stream().anyMatch(SharedIndexInformer::isRunning);
+        while (isRunning) {
+            isRunning = informerList.stream().anyMatch(SharedIndexInformer::isRunning);
+        }
     }
 
     private void validateAnnotations() {
