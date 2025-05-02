@@ -1,50 +1,109 @@
 package io.k8swatcher.annotation.processor;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.mockito.Mockito.*;
 
-import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.Namespace;
+import io.k8swatcher.annotation.EventType;
+import io.k8swatcher.annotation.Watch;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationContext;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
+@ExtendWith(MockitoExtension.class)
 class IndexInformerResHandlerTest {
 
-    private IndexInformerResHandler handler;
-
-    @MockitoBean
+    @Mock
     private ApplicationContext ctx;
 
-    @MockitoBean
-    private Class<?> beanClass;
+    @Mock
+    private TestBean testBean;
 
-    @MockitoBean
-    private List<Method> methods = new ArrayList<>();
+    private List<Method> allWatchMethods;
+    private IndexInformerResHandler handlerAllEvents;
 
     @BeforeEach
-    void setUp() {
-        handler = new IndexInformerResHandler(ctx, methods, beanClass);
+    void setUp() throws NoSuchMethodException {
+        allWatchMethods = List.of(
+                TestBean.class.getMethod("onAdd", Namespace.class),
+                TestBean.class.getMethod("onUpdate", Namespace.class, Namespace.class),
+                TestBean.class.getMethod("onDeleteSingle", Namespace.class),
+                TestBean.class.getMethod("onDeleteWithFlag", Namespace.class, boolean.class));
+        handlerAllEvents = new IndexInformerResHandler(ctx, allWatchMethods, TestBean.class);
     }
 
     @Test
-    void testOnAdd_NoExceptions() {
-        Pod newPod = new Pod();
-        assertDoesNotThrow(() -> handler.onAdd(newPod));
+    void onAdd() {
+        when(ctx.getBean(TestBean.class)).thenReturn(testBean);
+
+        Namespace ns = new Namespace();
+        handlerAllEvents.onAdd(ns);
+
+        verify(testBean, timeout(1_000).times(1)).onAdd(ns);
+
+        verify(testBean, never()).onUpdate(any(), any());
+        verify(testBean, never()).onDeleteSingle(any());
+        verify(testBean, never()).onDeleteWithFlag(any(), anyBoolean());
     }
 
     @Test
-    void testOnUpdate_NoExceptions() {
-        Pod oldPod = new Pod();
-        Pod newPod = new Pod();
-        assertDoesNotThrow(() -> handler.onUpdate(oldPod, newPod));
+    void onUpdate() {
+        when(ctx.getBean(TestBean.class)).thenReturn(testBean);
+
+        Namespace oldObj = new Namespace();
+        Namespace newObj = new Namespace();
+        handlerAllEvents.onUpdate(oldObj, newObj);
+
+        verify(testBean, timeout(1_000).times(1)).onUpdate(oldObj, newObj);
+
+        verify(testBean, never()).onAdd(any());
+        verify(testBean, never()).onDeleteSingle(any());
+        verify(testBean, never()).onDeleteWithFlag(any(), anyBoolean());
     }
 
     @Test
-    void testOnDelete_NoExceptions() {
-        Pod pod = new Pod();
-        assertDoesNotThrow(() -> handler.onDelete(pod, true));
+    void onDelete() {
+        when(ctx.getBean(TestBean.class)).thenReturn(testBean);
+
+        Namespace ns = new Namespace();
+        boolean flag = true;
+        handlerAllEvents.onDelete(ns, flag);
+
+        verify(testBean, timeout(1_000).times(1)).onDeleteSingle(ns);
+        verify(testBean, timeout(1_000).times(1)).onDeleteWithFlag(ns, flag);
+
+        verify(testBean, never()).onAdd(any());
+        verify(testBean, never()).onUpdate(any(), any());
+    }
+
+    @Test
+    void noMethodsForEvent() throws NoSuchMethodException {
+        Method addOnly = TestBean.class.getMethod("onAdd", Namespace.class);
+        IndexInformerResHandler handlerAddOnly = new IndexInformerResHandler(ctx, List.of(addOnly), TestBean.class);
+
+        Namespace ns = new Namespace();
+        handlerAddOnly.onUpdate(ns, ns);
+        handlerAddOnly.onDelete(ns, false);
+
+        verifyNoInteractions(testBean);
+        verify(ctx, never()).getBean(TestBean.class);
+    }
+
+    public static class TestBean {
+        @Watch(event = EventType.ADD, resource = Namespace.class)
+        public void onAdd(Namespace obj) {}
+
+        @Watch(event = EventType.UPDATE, resource = Namespace.class)
+        public void onUpdate(Namespace oldObj, Namespace newObj) {}
+
+        @Watch(event = EventType.DELETE, resource = Namespace.class)
+        public void onDeleteSingle(Namespace obj) {}
+
+        @Watch(event = EventType.DELETE, resource = Namespace.class)
+        public void onDeleteWithFlag(Namespace obj, boolean deletedFinalStateUnknown) {}
     }
 }
