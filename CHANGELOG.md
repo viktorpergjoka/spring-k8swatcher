@@ -1,5 +1,10 @@
 ## CHANGELOG
 
+### 1.0.5 (2025-05-06)
+
+#### Dependency Upgrade
+* Fix #21: Dependency Upgrade
+
 ### 1.0.4 (2025-03-14)
 
 #### Bugs
