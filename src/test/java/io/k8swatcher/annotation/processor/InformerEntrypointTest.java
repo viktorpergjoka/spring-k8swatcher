@@ -7,8 +7,10 @@ import io.k8swatcher.annotation.validate.AnnotationValidator;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -32,6 +34,7 @@ class InformerEntrypointTest {
     private SharedIndexInformer informer2;
 
     private InformerEntrypoint entrypoint;
+
     private ApplicationReadyEvent event;
 
     @BeforeEach
@@ -58,7 +61,7 @@ class InformerEntrypointTest {
 
     @Test
     void onStartUpWithInformers() {
-        List<SharedIndexInformer> informers = List.of(informer1, informer2);
+        var informers = List.of(informer1, informer2);
         when(informerCreator.createInformers()).thenReturn(informers);
 
         when(informer1.isRunning()).thenReturn(false);
@@ -79,7 +82,7 @@ class InformerEntrypointTest {
 
     @Test
     void shutdownClosesAllInformers() {
-        List<SharedIndexInformer> informers = List.of(informer1, informer2);
+        var informers = List.of(informer1, informer2);
         when(informerCreator.createInformers()).thenReturn(informers);
         when(informer1.isRunning()).thenReturn(false);
         when(informer2.isRunning()).thenReturn(false);
@@ -90,5 +93,61 @@ class InformerEntrypointTest {
 
         verify(informer1).close();
         verify(informer2).close();
+    }
+
+    @Test
+    @Timeout(5)
+    void blockingWaitsUntilInformerStops() throws Exception {
+        AtomicBoolean running = new AtomicBoolean(true);
+        when(informerCreator.createInformers()).thenReturn(List.of(informer1));
+        when(informer1.isRunning()).thenAnswer(invocation -> running.get());
+
+        entrypoint.onStartUp(event);
+        verify(informer1).start();
+        Thread.sleep(500);
+        running.set(false);
+
+        Thread.sleep(1500);
+        verify(informer1, atLeast(2)).isRunning();
+    }
+
+    @Test
+    @Timeout(5)
+    void blockingWaitsForAllInformersToStop() throws Exception {
+        AtomicBoolean running1 = new AtomicBoolean(true);
+        AtomicBoolean running2 = new AtomicBoolean(true);
+
+        when(informerCreator.createInformers()).thenReturn(List.of(informer1, informer2));
+        when(informer1.isRunning()).thenAnswer(invocation -> running1.get());
+        when(informer2.isRunning()).thenAnswer(invocation -> running2.get());
+
+        entrypoint.onStartUp(event);
+
+        verify(informer1).start();
+        verify(informer2).start();
+
+        running1.set(false);
+        Thread.sleep(1000);
+
+        verify(informer2, atLeast(1)).isRunning();
+        verify(informer1, atLeast(1)).isRunning();
+
+        running2.set(false);
+        Thread.sleep(1500);
+
+        verify(informer1, atLeast(2)).isRunning();
+        verify(informer2, atLeast(2)).isRunning();
+    }
+
+    @Test
+    @Timeout(5)
+    void runUntilStoppedCompletesWhenInformerAlreadyStopped() throws Exception {
+        when(informerCreator.createInformers()).thenReturn(List.of(informer1));
+        when(informer1.isRunning()).thenReturn(false);
+
+        entrypoint.onStartUp(event);
+
+        verify(informer1).start();
+        verify(informer1, atLeastOnce()).isRunning();
     }
 }
