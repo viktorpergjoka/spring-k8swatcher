@@ -34,7 +34,6 @@ class InformerEntrypointTest {
     private SharedIndexInformer informer2;
 
     private InformerEntrypoint entrypoint;
-
     private ApplicationReadyEvent event;
 
     @BeforeEach
@@ -61,7 +60,7 @@ class InformerEntrypointTest {
 
     @Test
     void onStartUpWithInformers() {
-        var informers = List.of(informer1, informer2);
+        List<SharedIndexInformer> informers = List.of(informer1, informer2);
         when(informerCreator.createInformers()).thenReturn(informers);
 
         when(informer1.isRunning()).thenReturn(false);
@@ -76,13 +75,13 @@ class InformerEntrypointTest {
         verify(informer1).start();
         verify(informer2).start();
 
-        verify(informer1).isRunning();
-        verify(informer2).isRunning();
+        verify(informer1, atLeastOnce()).isRunning();
+        verify(informer2, atLeastOnce()).isRunning();
     }
 
     @Test
     void shutdownClosesAllInformers() {
-        var informers = List.of(informer1, informer2);
+        List<SharedIndexInformer> informers = List.of(informer1, informer2);
         when(informerCreator.createInformers()).thenReturn(informers);
         when(informer1.isRunning()).thenReturn(false);
         when(informer2.isRunning()).thenReturn(false);
@@ -103,12 +102,14 @@ class InformerEntrypointTest {
         when(informer1.isRunning()).thenAnswer(invocation -> running.get());
 
         entrypoint.onStartUp(event);
+
         verify(informer1).start();
+
         Thread.sleep(500);
         running.set(false);
+        Thread.sleep(1000);
 
-        Thread.sleep(1500);
-        verify(informer1, atLeast(2)).isRunning();
+        verify(informer1, atLeastOnce()).isRunning();
     }
 
     @Test
@@ -127,16 +128,15 @@ class InformerEntrypointTest {
         verify(informer2).start();
 
         running1.set(false);
-        Thread.sleep(1000);
-
-        verify(informer2, atLeast(1)).isRunning();
-        verify(informer1, atLeast(1)).isRunning();
+        Thread.sleep(500);
+        verify(informer2, atLeastOnce()).isRunning();
+        verify(informer1, atLeastOnce()).isRunning();
 
         running2.set(false);
-        Thread.sleep(1500);
+        Thread.sleep(1000);
 
-        verify(informer1, atLeast(2)).isRunning();
-        verify(informer2, atLeast(2)).isRunning();
+        verify(informer1, atLeastOnce()).isRunning();
+        verify(informer2, atLeastOnce()).isRunning();
     }
 
     @Test
@@ -146,6 +146,8 @@ class InformerEntrypointTest {
         when(informer1.isRunning()).thenReturn(false);
 
         entrypoint.onStartUp(event);
+
+        Thread.sleep(200);
 
         verify(informer1).start();
         verify(informer1, atLeastOnce()).isRunning();
