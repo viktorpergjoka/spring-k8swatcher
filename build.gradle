@@ -75,6 +75,7 @@ spotless {
         endWithNewline()
     }
     java {
+        licenseHeaderFile 'spotless.license.java', 'package '
         formatAnnotations()
         removeUnusedImports()
         palantirJavaFormat()
