@@ -1,5 +1,12 @@
 ## CHANGELOG
 
+### 1.0.6 (2025-08-09)
+
+* Fix #25
+  * refactored InformerEntrypoint to use SmartLifecycle
+  * Spring boot upgrade to 3.5.4
+  * fabric8 upgrade to 7.3.1
+
 ### 1.0.5 (2025-05-06)
 
 #### Dependency Upgrade
