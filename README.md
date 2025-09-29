@@ -5,8 +5,8 @@ Spring-K8sWatcher
 
 ![Fabric8](https://img.shields.io/badge/Fabric8-7.3.1-blue?logo=kubernetes)
 
-
-Spring-K8sWatcher is an easy way to use Kubernetes Informer with Spring Boot only with few annotations. It uses the fabric8 Kubernetes Client.
+Spring-K8sWatcher is a lightweight Spring Boot Reactive Core for Kubernetes Events.
+It is an easy way to use Kubernetes Informer with Spring Boot only with few annotations. It uses the fabric8 Kubernetes Client.
 
 An Informer is a mechanism where you can watch on any Kubernetes Resource for changes (ADD, UPDATE, DELETE) and react to them, e.g. when a Pod is added, or a ConfigMap is modified or even for Custom Resource Definitions.
 Therefore you could build Kubernetes Controllers and Kubernetes Operators with it.
