@@ -1,5 +1,10 @@
 ## CHANGELOG
 
+### 1.0.7 (2025-10-20)
+* Fix#27
+  * reverted changes to v1.0.5 for blocking informers from shutdown
+
+
 ### 1.0.6 (2025-08-09)
 
 * Fix #25
