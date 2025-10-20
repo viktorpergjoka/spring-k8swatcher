@@ -15,11 +15,13 @@
  */
 package io.k8swatcher.annotation.processor;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 import io.fabric8.kubernetes.client.informers.SharedIndexInformer;
 import io.k8swatcher.annotation.validate.AnnotationValidator;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,9 +29,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 
 @ExtendWith(MockitoExtension.class)
-@SuppressWarnings({"rawtypes", "unchecked"})
 class InformerEntrypointTest {
 
     @Mock
@@ -44,70 +46,115 @@ class InformerEntrypointTest {
     @Mock
     private SharedIndexInformer informer2;
 
-    private InformerEntrypoint entrypoint;
+    @Mock
+    private ApplicationReadyEvent applicationReadyEvent;
+
+    private InformerEntrypoint informerEntrypoint;
 
     @BeforeEach
     void setUp() {
-        entrypoint = new InformerEntrypoint(validator, informerCreator);
+        informerEntrypoint = new InformerEntrypoint(validator, informerCreator);
     }
 
     @Test
-    void shouldValidateAndStartInformersUntilTheyAreSynced() {
-        when(informer1.hasSynced()).thenReturn(true);
-        when(informer2.hasSynced()).thenReturn(true);
-        when(informerCreator.createInformers()).thenReturn(List.of(informer1, informer2));
+    void onStartUp_validatesAnnotations() {
+        when(informerCreator.createInformers()).thenReturn(Collections.emptyList());
 
-        entrypoint.start();
+        informerEntrypoint.onStartUp(applicationReadyEvent);
 
-        InOrder inOrder = inOrder(validator);
-        inOrder.verify(validator).validateInformerAnnotations();
-        inOrder.verify(validator).validateWatchAnnotations();
+        verify(validator).validateInformerAnnotations();
+        verify(validator).validateWatchAnnotations();
+    }
+
+    @Test
+    void onStartUp_createsAndStartsInformers() {
+        List<SharedIndexInformer> informers = Arrays.asList(informer1, informer2);
+        when(informerCreator.createInformers()).thenReturn(informers);
+        when(informer1.isRunning()).thenReturn(false);
+        when(informer2.isRunning()).thenReturn(false);
+
+        informerEntrypoint.onStartUp(applicationReadyEvent);
 
         verify(informerCreator).createInformers();
         verify(informer1).start();
         verify(informer2).start();
-        verify(informer1, atLeastOnce()).hasSynced();
-        verify(informer2, atLeastOnce()).hasSynced();
     }
 
     @Test
-    void shouldNotFailWhenThereAreNoInformers() {
-        when(informerCreator.createInformers()).thenReturn(List.of());
+    void onStartUp_executesInCorrectOrder() {
+        List<SharedIndexInformer> informers = Arrays.asList(informer1);
+        when(informerCreator.createInformers()).thenReturn(informers);
+        when(informer1.isRunning()).thenReturn(false);
 
-        entrypoint.start();
+        informerEntrypoint.onStartUp(applicationReadyEvent);
+
+        InOrder inOrder = inOrder(validator, informerCreator, informer1);
+        inOrder.verify(validator).validateInformerAnnotations();
+        inOrder.verify(validator).validateWatchAnnotations();
+        inOrder.verify(informerCreator).createInformers();
+        inOrder.verify(informer1).start();
+    }
+
+    @Test
+    void onStartUp_waitsUntilAllInformersStopRunning() {
+        List<SharedIndexInformer> informers = Arrays.asList(informer1, informer2);
+        when(informerCreator.createInformers()).thenReturn(informers);
+
+        when(informer1.isRunning()).thenReturn(true, true, false);
+        when(informer2.isRunning()).thenReturn(true, false, false);
+
+        informerEntrypoint.onStartUp(applicationReadyEvent);
+
+        verify(informer1, atLeast(3)).isRunning();
+        verify(informer2, atLeast(2)).isRunning();
+    }
+
+    @Test
+    void onStartUp_throwsRuntimeExceptionOnInterruption() {
+        List<SharedIndexInformer> informers = Arrays.asList(informer1);
+        when(informerCreator.createInformers()).thenReturn(informers);
+        when(informer1.isRunning()).thenReturn(true);
+
+        Thread.currentThread().interrupt();
+
+        assertThrows(RuntimeException.class, () -> informerEntrypoint.onStartUp(applicationReadyEvent));
+
+        Thread.interrupted();
+    }
+
+    @Test
+    void onStartUp_handlesEmptyInformerList() {
+        when(informerCreator.createInformers()).thenReturn(Collections.emptyList());
+
+        informerEntrypoint.onStartUp(applicationReadyEvent);
 
         verify(validator).validateInformerAnnotations();
         verify(validator).validateWatchAnnotations();
         verify(informerCreator).createInformers();
+        verifyNoMoreInteractions(informer1, informer2);
     }
 
     @Test
-    void shouldCloseAllInformersOnStop() {
-        when(informerCreator.createInformers()).thenReturn(List.of(informer1, informer2));
-        when(informer1.hasSynced()).thenReturn(true);
-        when(informer2.hasSynced()).thenReturn(true);
+    void shutdown_closesAllInformers() {
+        List<SharedIndexInformer> informers = Arrays.asList(informer1, informer2);
+        when(informerCreator.createInformers()).thenReturn(informers);
+        when(informer1.isRunning()).thenReturn(false);
+        when(informer2.isRunning()).thenReturn(false);
 
-        entrypoint.start();
-        entrypoint.stop();
+        informerEntrypoint.onStartUp(applicationReadyEvent);
+        informerEntrypoint.shutdown();
 
         verify(informer1).close();
         verify(informer2).close();
     }
 
     @Test
-    void shouldReportRunningStateCorrectly() {
-        when(informerCreator.createInformers()).thenReturn(List.of(informer1, informer2));
-        when(informer1.hasSynced()).thenReturn(true);
-        when(informer2.hasSynced()).thenReturn(true);
+    void shutdown_handlesEmptyInformerList() {
+        when(informerCreator.createInformers()).thenReturn(Collections.emptyList());
 
-        entrypoint.start();
+        informerEntrypoint.onStartUp(applicationReadyEvent);
+        informerEntrypoint.shutdown();
 
-        when(informer1.isRunning()).thenReturn(false);
-        when(informer2.isRunning()).thenReturn(true);
-        assertThat(entrypoint.isRunning()).isTrue();
-
-        when(informer1.isRunning()).thenReturn(false);
-        when(informer2.isRunning()).thenReturn(false);
-        assertThat(entrypoint.isRunning()).isFalse();
+        verifyNoInteractions(informer1, informer2);
     }
 }
