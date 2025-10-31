@@ -2,7 +2,7 @@ import org.springframework.boot.gradle.plugin.SpringBootPlugin
 
 plugins {
     id 'java-library'
-    id 'org.springframework.boot' version '3.5.4' apply false
+    id 'org.springframework.boot' version '3.5.7' apply false
     id 'io.spring.dependency-management' version '1.1.7'
     id 'com.diffplug.spotless' version '7.2.1'
     id 'maven-publish'
@@ -39,7 +39,7 @@ dependencyManagement {
 }
 
 ext{
-    fabric8Version = '7.3.1'
+    fabric8Version = '7.4.0'
 }
 
 dependencies {
