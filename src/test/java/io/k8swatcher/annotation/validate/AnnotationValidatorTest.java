@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import io.k8swatcher.annotation.Informer;
 import io.k8swatcher.annotation.ValidateAnnotationTestConfig;
+import io.k8swatcher.annotation.cfg.InformerConfigurationProperty;
 import io.k8swatcher.annotation.processor.KubeClientFactory;
 import java.lang.reflect.MalformedParametersException;
 import java.util.Map;
@@ -43,13 +44,17 @@ public class AnnotationValidatorTest {
 
     private AnnotationValidator validator;
 
+    private InformerConfigurationProperty informerConfigurationProperty;
+
     private Map<String, Object> informerBeanMap;
 
     @BeforeEach
     public void setUp() {
         this.informerBeanMap = testCtx.getBeansWithAnnotation(Informer.class);
         this.clientFactory = new KubeClientFactory(ctx);
-        this.validator = new AnnotationValidator(ctx, clientFactory);
+        this.informerConfigurationProperty = new InformerConfigurationProperty();
+        this.informerConfigurationProperty.postConstruct();
+        this.validator = new AnnotationValidator(ctx, clientFactory, informerConfigurationProperty);
         clientFactory.init();
         Mockito.clearInvocations(ctx);
     }
@@ -128,5 +133,14 @@ public class AnnotationValidatorTest {
         validator.init();
 
         assertThrows(MalformedParametersException.class, () -> validator.validateWatchAnnotations());
+    }
+
+    @Test
+    public void testInvalidConfigName() {
+        Mockito.when(ctx.getBeansWithAnnotation(Informer.class))
+                .thenReturn(Map.of("invalidConfigNameTestBean", this.informerBeanMap.get("invalidConfigNameTestBean")));
+        validator.init();
+
+        assertThrows(IllegalArgumentException.class, () -> validator.validateHasConfigName());
     }
 }
