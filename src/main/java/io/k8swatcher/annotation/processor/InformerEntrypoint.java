@@ -61,6 +61,7 @@ public class InformerEntrypoint {
     private void validateAnnotations() {
         validator.validateInformerAnnotations();
         validator.validateWatchAnnotations();
+        validator.validateHasConfigName();
     }
 
     @PreDestroy

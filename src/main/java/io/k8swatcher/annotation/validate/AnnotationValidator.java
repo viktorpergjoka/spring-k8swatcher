@@ -20,6 +20,7 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import io.k8swatcher.annotation.EventType;
 import io.k8swatcher.annotation.Informer;
 import io.k8swatcher.annotation.Watch;
+import io.k8swatcher.annotation.cfg.InformerConfigurationProperty;
 import io.k8swatcher.annotation.processor.KubeClientFactory;
 import jakarta.annotation.PostConstruct;
 import java.lang.reflect.MalformedParametersException;
@@ -29,6 +30,7 @@ import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 @Component
 @Slf4j
@@ -37,11 +39,16 @@ public class AnnotationValidator {
     private final ApplicationContext ctx;
     private final KubeClientFactory clients;
     private Map<String, Object> informerBeansMap;
+    private InformerConfigurationProperty informerConfigurationProperty;
 
-    public AnnotationValidator(ApplicationContext ctx, KubeClientFactory clients) {
+    public AnnotationValidator(
+            ApplicationContext ctx,
+            KubeClientFactory clients,
+            InformerConfigurationProperty informerConfigurationProperty) {
         this.ctx = ctx;
         this.clients = clients;
         informerBeansMap = new HashMap<>();
+        this.informerConfigurationProperty = informerConfigurationProperty;
     }
 
     @PostConstruct
@@ -80,6 +87,20 @@ public class AnnotationValidator {
                     case ADD -> checkAddParams(beanClass, method, resource);
                     case UPDATE -> checkUpdateParams(beanClass, method, resource);
                     case DELETE -> checkDeleteParams(beanClass, method, resource);
+                }
+            }
+        }
+    }
+
+    public void validateHasConfigName() {
+        for (Object bean : informerBeansMap.values()) {
+            Class<?> beanClass = bean.getClass();
+            Informer informer = beanClass.getAnnotation(Informer.class);
+            String name = informer.name();
+            if (StringUtils.hasText(name)) {
+                if (!informerConfigurationProperty.getConfig().containsKey(name)) {
+                    throw new IllegalArgumentException("In class " + beanClass.getName() + " " + name
+                            + " is not defined under k8swatcher.config." + name);
                 }
             }
         }
