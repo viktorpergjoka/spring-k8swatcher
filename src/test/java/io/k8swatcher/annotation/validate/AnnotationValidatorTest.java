@@ -15,10 +15,14 @@
  */
 package io.k8swatcher.annotation.validate;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import io.k8swatcher.annotation.Informer;
 import io.k8swatcher.annotation.ValidateAnnotationTestConfig;
 import io.k8swatcher.annotation.cfg.InformerConfigurationProperty;
 import io.k8swatcher.annotation.processor.KubeClientFactory;
+import java.lang.reflect.MalformedParametersException;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -26,11 +30,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-
-import java.lang.reflect.MalformedParametersException;
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest(classes = {ValidateAnnotationTestConfig.class})
 public class AnnotationValidatorTest {
