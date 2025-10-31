@@ -1,5 +1,10 @@
 ## CHANGELOG
 
+(pending)
+
+#### Dependency Upgrade
+* Fix #30: Dependency Upgrade
+
 ### 1.0.7 (2025-10-20)
 * Fix#27
   * reverted changes to v1.0.5 for blocking informers from shutdown
