@@ -15,10 +15,16 @@
  */
 package io.k8swatcher.annotation.validate;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import io.fabric8.kubernetes.api.model.Namespace;
+import io.fabric8.kubernetes.api.model.Pod;
+import io.k8swatcher.annotation.EventType;
 import io.k8swatcher.annotation.Informer;
 import io.k8swatcher.annotation.ValidateAnnotationTestConfig;
+import io.k8swatcher.annotation.Watch;
+import io.k8swatcher.annotation.cfg.InformerConfiguration;
 import io.k8swatcher.annotation.cfg.InformerConfigurationProperty;
 import io.k8swatcher.annotation.processor.KubeClientFactory;
 import java.lang.reflect.MalformedParametersException;
@@ -142,5 +148,97 @@ public class AnnotationValidatorTest {
         validator.init();
 
         assertThrows(IllegalArgumentException.class, () -> validator.validateHasConfigName());
+    }
+
+    @Informer(
+            nsLabels = {"env=prod", "tier=backend"},
+            resLabels = {"app=myapp"})
+    static class ValidInformerBean {
+        @Watch(event = EventType.ADD, resource = Namespace.class)
+        public void onAdd(Namespace ns) {}
+
+        @Watch(event = EventType.UPDATE, resource = Namespace.class)
+        public void onUpdate(Namespace oldNs, Namespace newNs) {}
+
+        @Watch(event = EventType.DELETE, resource = Namespace.class)
+        public void onDeleteSingle(Namespace ns) {}
+
+        @Watch(event = EventType.DELETE, resource = Pod.class)
+        public void onDeleteWithFlag(Pod pod, boolean flag) {}
+    }
+
+    @Test
+    public void testValidInformerAnnotations() {
+        Mockito.when(ctx.getBeansWithAnnotation(Informer.class))
+                .thenReturn(Map.of("validBean", new ValidInformerBean()));
+        validator.init();
+
+        assertDoesNotThrow(() -> validator.validateInformerAnnotations());
+    }
+
+    @Test
+    public void testValidWatchAnnotations() {
+        Mockito.when(ctx.getBeansWithAnnotation(Informer.class))
+                .thenReturn(Map.of("validBean", new ValidInformerBean()));
+        validator.init();
+
+        assertDoesNotThrow(() -> validator.validateWatchAnnotations());
+    }
+
+    @Test
+    public void testValidConfigName_withDefault() {
+        Mockito.when(ctx.getBeansWithAnnotation(Informer.class))
+                .thenReturn(Map.of("validBean", new ValidInformerBean()));
+        validator.init();
+
+        assertDoesNotThrow(() -> validator.validateHasConfigName());
+    }
+
+    @Informer(name = "custom")
+    static class ValidCustomConfigBean {
+        @Watch(event = EventType.ADD, resource = Namespace.class)
+        public void onAdd(Namespace ns) {}
+    }
+
+    @Test
+    public void testValidConfigName_withCustomConfig() {
+        InformerConfiguration customConfig = new InformerConfiguration();
+        informerConfigurationProperty.getConfig().put("custom", customConfig);
+
+        Mockito.when(ctx.getBeansWithAnnotation(Informer.class))
+                .thenReturn(Map.of("customBean", new ValidCustomConfigBean()));
+        validator.init();
+
+        assertDoesNotThrow(() -> validator.validateHasConfigName());
+    }
+
+    @Informer
+    static class ValidDeleteWithBooleanParam {
+        @Watch(event = EventType.DELETE, resource = Namespace.class)
+        public void onDelete(Namespace ns, Boolean deletedFinalStateUnknown) {}
+    }
+
+    @Test
+    public void testValidDeleteParams_withBooleanObjectParam() {
+        Mockito.when(ctx.getBeansWithAnnotation(Informer.class))
+                .thenReturn(Map.of("validDeleteBean", new ValidDeleteWithBooleanParam()));
+        validator.init();
+
+        assertDoesNotThrow(() -> validator.validateWatchAnnotations());
+    }
+
+    @Informer
+    static class EmptyLabelsBean {
+        @Watch(event = EventType.ADD, resource = Namespace.class)
+        public void onAdd(Namespace ns) {}
+    }
+
+    @Test
+    public void testValidInformerAnnotations_withEmptyLabels() {
+        Mockito.when(ctx.getBeansWithAnnotation(Informer.class))
+                .thenReturn(Map.of("emptyLabelsBean", new EmptyLabelsBean()));
+        validator.init();
+
+        assertDoesNotThrow(() -> validator.validateInformerAnnotations());
     }
 }

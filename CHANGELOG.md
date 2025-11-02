@@ -1,6 +1,6 @@
 ## CHANGELOG
 
-(pending)
+### 1.0.8 (2025-11-02)
 
 #### Dependency Upgrade
 * Fix #30: Dependency Upgrade
@@ -9,8 +9,7 @@
 * Fix #29: Throw an exception if a config is not found
 
 ### 1.0.7 (2025-10-20)
-* Fix#27
-  * reverted changes to v1.0.5 for blocking informers from shutdown
+* Fix#27 reverted changes to v1.0.5 for blocking informers from shutdown
 
 
 ### 1.0.6 (2025-08-09)
