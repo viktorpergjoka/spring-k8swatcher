@@ -228,6 +228,21 @@ public class AnnotationValidatorTest {
     }
 
     @Informer
+    static class InvalidDeleteSecondParamBean {
+        @Watch(event = EventType.DELETE, resource = Namespace.class)
+        public void onDelete(Namespace ns, String notABoolean) {}
+    }
+
+    @Test
+    public void testInvalidDeleteParams_withNonBooleanSecondParam() {
+        Mockito.when(ctx.getBeansWithAnnotation(Informer.class))
+                .thenReturn(Map.of("invalidDeleteBean", new InvalidDeleteSecondParamBean()));
+        validator.init();
+
+        assertThrows(MalformedParametersException.class, () -> validator.validateWatchAnnotations());
+    }
+
+    @Informer
     static class EmptyLabelsBean {
         @Watch(event = EventType.ADD, resource = Namespace.class)
         public void onAdd(Namespace ns) {}
