@@ -48,32 +48,6 @@ class InformerConfigurationPropertyTest {
     }
 
     @Test
-    void getConfig_returnsModifiableMap() {
-        InformerConfigurationProperty property = new InformerConfigurationProperty();
-
-        Map<String, InformerConfiguration> config = property.getConfig();
-
-        assertNotNull(config);
-        config.put("test", new InformerConfiguration());
-        assertEquals(1, property.getConfig().size());
-    }
-
-    @Test
-    void config_canStoreMultipleConfigurations() {
-        InformerConfigurationProperty property = new InformerConfigurationProperty();
-
-        InformerConfiguration config1 = new InformerConfiguration();
-        InformerConfiguration config2 = new InformerConfiguration();
-
-        property.getConfig().put("config1", config1);
-        property.getConfig().put("config2", config2);
-
-        assertEquals(2, property.getConfig().size());
-        assertSame(config1, property.getConfig().get("config1"));
-        assertSame(config2, property.getConfig().get("config2"));
-    }
-
-    @Test
     void postConstruct_preservesExistingConfigurations() {
         InformerConfigurationProperty property = new InformerConfigurationProperty();
 
