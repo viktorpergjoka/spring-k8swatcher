@@ -1,0 +1,14 @@
+spring:
+  ai:
+    mcp:
+      server:
+        name: k8s-mcp-server
+        version: 1.0.0
+        type: SYNC
+        sse-message-endpoint: /mcp/message
+
+k8swatcher:
+  config:
+    default:
+      nsNames:
+        - default
