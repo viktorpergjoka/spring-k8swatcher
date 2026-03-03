@@ -48,37 +48,46 @@ public class KubernetesMcpTools {
         if (pod.getStatus().getContainerStatuses() != null) {
             details.append("\nContainers:\n");
             for (ContainerStatus cs : pod.getStatus().getContainerStatuses()) {
-                details.append("  - ").append(cs.getName()).append("\n");
-                details.append("    Ready: ").append(cs.getReady()).append("\n");
-                details.append("    Restarts: ").append(cs.getRestartCount()).append("\n");
-                if (cs.getState().getWaiting() != null) {
-                    details.append("    Waiting: ").append(cs.getState().getWaiting().getReason()).append("\n");
-                    if (cs.getState().getWaiting().getMessage() != null) {
-                        details.append("    Message: ").append(cs.getState().getWaiting().getMessage()).append("\n");
-                    }
-                }
-                if (cs.getState().getTerminated() != null) {
-                    details.append("    Terminated: ").append(cs.getState().getTerminated().getReason()).append("\n");
-                    details.append("    Exit Code: ").append(cs.getState().getTerminated().getExitCode()).append("\n");
-                }
-                if (cs.getLastState() != null && cs.getLastState().getTerminated() != null) {
-                    details.append("    Last Termination: ")
-                            .append(cs.getLastState().getTerminated().getReason()).append("\n");
-                    details.append("    Last Exit Code: ")
-                            .append(cs.getLastState().getTerminated().getExitCode()).append("\n");
-                }
+                appendContainerStatus(details, cs);
             }
         }
 
         if (pod.getStatus().getConditions() != null) {
             details.append("\nConditions:\n");
-            pod.getStatus().getConditions().forEach(c ->
-                    details.append("  - ").append(c.getType())
-                            .append(": ").append(c.getStatus())
-                            .append(" (").append(c.getReason() != null ? c.getReason() : "N/A").append(")\n"));
+            for (var condition : pod.getStatus().getConditions()) {
+                String reason = condition.getReason() != null ? condition.getReason() : "N/A";
+                details.append("  - ").append(condition.getType())
+                        .append(": ").append(condition.getStatus())
+                        .append(" (").append(reason).append(")\n");
+            }
         }
 
         return details.toString();
+    }
+
+    private void appendContainerStatus(StringBuilder details, ContainerStatus cs) {
+        details.append("  - ").append(cs.getName()).append("\n");
+        details.append("    Ready: ").append(cs.getReady()).append("\n");
+        details.append("    Restarts: ").append(cs.getRestartCount()).append("\n");
+
+        if (cs.getState().getWaiting() != null) {
+            details.append("    Waiting: ").append(cs.getState().getWaiting().getReason()).append("\n");
+            if (cs.getState().getWaiting().getMessage() != null) {
+                details.append("    Message: ").append(cs.getState().getWaiting().getMessage()).append("\n");
+            }
+        }
+
+        if (cs.getState().getTerminated() != null) {
+            details.append("    Terminated: ").append(cs.getState().getTerminated().getReason()).append("\n");
+            details.append("    Exit Code: ").append(cs.getState().getTerminated().getExitCode()).append("\n");
+        }
+
+        if (cs.getLastState() != null && cs.getLastState().getTerminated() != null) {
+            details.append("    Last Termination: ")
+                    .append(cs.getLastState().getTerminated().getReason()).append("\n");
+            details.append("    Last Exit Code: ")
+                    .append(cs.getLastState().getTerminated().getExitCode()).append("\n");
+        }
     }
 
     @McpTool(description = "Get the last 50 lines of logs from a specific pod. "
@@ -115,20 +124,22 @@ public class KubernetesMcpTools {
         podsByPhase.forEach((phase, count) ->
                 summary.append("  ").append(phase).append(": ").append(count).append("\n"));
 
-        long unhealthyCount = pods.stream()
-                .filter(p -> !"Running".equals(p.getStatus().getPhase())
-                        && !"Succeeded".equals(p.getStatus().getPhase()))
-                .count();
+        List<Pod> unhealthyPods = pods.stream()
+                .filter(p -> !isHealthyPhase(p.getStatus().getPhase()))
+                .toList();
 
-        if (unhealthyCount > 0) {
+        if (!unhealthyPods.isEmpty()) {
             summary.append("\nUnhealthy Pods:\n");
-            pods.stream()
-                    .filter(p -> !"Running".equals(p.getStatus().getPhase())
-                            && !"Succeeded".equals(p.getStatus().getPhase()))
-                    .forEach(p -> summary.append("  - ").append(p.getMetadata().getName())
-                            .append(" (").append(p.getStatus().getPhase()).append(")\n"));
+            for (Pod p : unhealthyPods) {
+                summary.append("  - ").append(p.getMetadata().getName())
+                        .append(" (").append(p.getStatus().getPhase()).append(")\n");
+            }
         }
 
         return summary.toString();
+    }
+
+    private boolean isHealthyPhase(String phase) {
+        return "Running".equals(phase) || "Succeeded".equals(phase);
     }
 }

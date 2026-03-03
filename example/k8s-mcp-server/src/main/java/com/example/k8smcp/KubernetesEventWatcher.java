@@ -20,13 +20,7 @@ public class KubernetesEventWatcher {
 
     @Watch(event = EventType.ADD, resource = Pod.class)
     public void podAdded(Pod pod) {
-        store.record(new ClusterEvent(
-                Instant.now(),
-                "ADD",
-                "Pod",
-                pod.getMetadata().getName(),
-                pod.getMetadata().getNamespace(),
-                "Pod created, phase: " + pod.getStatus().getPhase()));
+        recordPodEvent(pod, EventType.ADD, "Pod created, phase: " + pod.getStatus().getPhase());
     }
 
     @Watch(event = EventType.UPDATE, resource = Pod.class)
@@ -47,23 +41,21 @@ public class KubernetesEventWatcher {
             summary = "Pod updated, phase: " + newPhase;
         }
 
-        store.record(new ClusterEvent(
-                Instant.now(),
-                "UPDATE",
-                "Pod",
-                newPod.getMetadata().getName(),
-                newPod.getMetadata().getNamespace(),
-                summary));
+        recordPodEvent(newPod, EventType.UPDATE, summary);
     }
 
     @Watch(event = EventType.DELETE, resource = Pod.class)
     public void podDeleted(Pod pod) {
+        recordPodEvent(pod, EventType.DELETE, "Pod deleted");
+    }
+
+    private void recordPodEvent(Pod pod, EventType eventType, String summary) {
         store.record(new ClusterEvent(
                 Instant.now(),
-                "DELETE",
+                eventType.name(),
                 "Pod",
                 pod.getMetadata().getName(),
                 pod.getMetadata().getNamespace(),
-                "Pod deleted"));
+                summary));
     }
 }
