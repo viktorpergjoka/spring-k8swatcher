@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.stereotype.Component;
 
@@ -13,11 +14,13 @@ public class ClusterEventStore {
     private static final int MAX_EVENTS = 1000;
 
     private final ConcurrentLinkedDeque<ClusterEvent> events = new ConcurrentLinkedDeque<>();
+    private final AtomicInteger size = new AtomicInteger();
 
     public void record(ClusterEvent event) {
         events.addFirst(event);
-        while (events.size() > MAX_EVENTS) {
+        if (size.incrementAndGet() > MAX_EVENTS) {
             events.removeLast();
+            size.decrementAndGet();
         }
     }
 
