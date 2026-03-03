@@ -24,7 +24,6 @@ dependencyManagement {
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.ai:spring-ai-starter-mcp-server-webmvc'
     implementation 'io.k8swatcher:spring-k8swatcher:1.0.8'
 }

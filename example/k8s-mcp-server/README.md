@@ -22,20 +22,20 @@ This is the companion example project for the article: **"Build a Real-Time Kube
 The app will:
 - Start a Spring Boot web server on port `8080`
 - Begin watching Pod events in the `default` namespace via k8swatcher
-- Expose MCP tools over SSE at `http://localhost:8080/sse`
+- Expose MCP tools over Streamable HTTP at `http://localhost:8080/mcp`
 
 ### 2. Connect Claude Code
 
 Register the running MCP server with a single command:
 
 ```bash
-claude mcp add --transport sse k8s-mcp-server http://localhost:8080/sse
+claude mcp add --transport http k8s-mcp-server http://localhost:8080/mcp
 ```
 
 This adds the server at the **local** scope (current project only). To make it available across all projects, use `--scope user`:
 
 ```bash
-claude mcp add --transport sse --scope user k8s-mcp-server http://localhost:8080/sse
+claude mcp add --transport http --scope user k8s-mcp-server http://localhost:8080/mcp
 ```
 
 Verify the connection inside Claude Code:
@@ -108,5 +108,5 @@ src/main/java/com/example/k8smcp/
 ├── ClusterEvent.java                # Event record
 ├── ClusterEventStore.java           # In-memory ring buffer (last 1000 events)
 ├── KubernetesEventWatcher.java      # @Informer + @Watch handlers for Pods
-└── KubernetesMcpTools.java          # @Tool methods exposed via MCP
+└── KubernetesMcpTools.java          # @McpTool methods exposed via MCP
 ```

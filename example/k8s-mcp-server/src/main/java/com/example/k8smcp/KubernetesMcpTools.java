@@ -7,8 +7,8 @@ import java.util.stream.Collectors;
 import io.fabric8.kubernetes.api.model.ContainerStatus;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import org.springframework.ai.tool.annotation.Tool;
-import org.springframework.ai.tool.annotation.ToolParam;
+import org.springaicommunity.mcp.annotation.McpTool;
+import org.springaicommunity.mcp.annotation.McpToolParam;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -22,18 +22,18 @@ public class KubernetesMcpTools {
         this.kubernetesClient = kubernetesClient;
     }
 
-    @Tool(description = "Get recent Kubernetes cluster events captured by the informer. "
+    @McpTool(description = "Get recent Kubernetes cluster events captured by the informer. "
             + "Returns events from the last N minutes including pod creations, updates, and deletions.")
     public List<ClusterEvent> getRecentEvents(
-            @ToolParam(description = "Number of minutes to look back for events") int minutes) {
+            @McpToolParam(description = "Number of minutes to look back for events") int minutes) {
         return eventStore.getRecent(minutes);
     }
 
-    @Tool(description = "Get detailed information about a specific pod including its status, "
+    @McpTool(description = "Get detailed information about a specific pod including its status, "
             + "container states, restart counts, and conditions.")
     public String getPodDetails(
-            @ToolParam(description = "Name of the pod") String podName,
-            @ToolParam(description = "Kubernetes namespace of the pod") String namespace) {
+            @McpToolParam(description = "Name of the pod") String podName,
+            @McpToolParam(description = "Kubernetes namespace of the pod") String namespace) {
         Pod pod = kubernetesClient.pods().inNamespace(namespace).withName(podName).get();
         if (pod == null) {
             return "Pod " + podName + " not found in namespace " + namespace;
@@ -81,11 +81,11 @@ public class KubernetesMcpTools {
         return details.toString();
     }
 
-    @Tool(description = "Get the last 50 lines of logs from a specific pod. "
+    @McpTool(description = "Get the last 50 lines of logs from a specific pod. "
             + "Useful for debugging crashes, errors, or unexpected behavior.")
     public String getPodLogs(
-            @ToolParam(description = "Name of the pod") String podName,
-            @ToolParam(description = "Kubernetes namespace of the pod") String namespace) {
+            @McpToolParam(description = "Name of the pod") String podName,
+            @McpToolParam(description = "Kubernetes namespace of the pod") String namespace) {
         try {
             return kubernetesClient.pods()
                     .inNamespace(namespace)
@@ -97,7 +97,7 @@ public class KubernetesMcpTools {
         }
     }
 
-    @Tool(description = "Get a summary of all pods in watched namespaces grouped by their phase "
+    @McpTool(description = "Get a summary of all pods in watched namespaces grouped by their phase "
             + "(Running, Pending, Failed, Succeeded, Unknown). "
             + "Provides a quick overview of cluster health.")
     public String getClusterSummary() {

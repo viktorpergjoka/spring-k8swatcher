@@ -5,7 +5,9 @@ spring:
         name: k8s-mcp-server
         version: 1.0.0
         type: SYNC
-        sse-message-endpoint: /mcp/message
+        protocol: STREAMABLE
+        streamable-http:
+          mcp-endpoint: /mcp
 
 k8swatcher:
   config:
