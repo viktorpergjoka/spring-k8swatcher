@@ -5,11 +5,9 @@ Spring-K8sWatcher
 
 ![Fabric8](https://img.shields.io/badge/Fabric8-7.4.0-blue?logo=kubernetes)
 
-Spring-K8sWatcher is a lightweight Spring Boot Reactive Core for Kubernetes Events.
-It is an easy way to use Kubernetes Informer with Spring Boot only with few annotations. It uses the fabric8 Kubernetes Client.
+Spring-K8sWatcher is a lightweight Spring Boot library for watching Kubernetes resource events. It wraps the Fabric8 Kubernetes Client Informer API behind simple annotations — no boilerplate needed.
 
-An Informer is a mechanism where you can watch on any Kubernetes Resource for changes (ADD, UPDATE, DELETE) and react to them, e.g. when a Pod is added, or a ConfigMap is modified or even for Custom Resource Definitions.
-Therefore you could build Kubernetes Controllers and Kubernetes Operators with it.
+Watch any Kubernetes resource for changes (ADD, UPDATE, DELETE) including Custom Resource Definitions. Build Kubernetes Controllers and Operators with just `@Informer` and `@Watch`.
 
 
 ## Contents
@@ -42,7 +40,7 @@ Maven:
 <dependency>
   <groupId>io.k8swatcher</groupId>
   <artifactId>spring-k8swatcher</artifactId>
-  <version>1.0.8</version>
+  <version>1.0.9</version>
 </dependency>
 
 ```
@@ -51,7 +49,7 @@ Gradle:
 
 ```
 implementation 'org.springframework.boot:spring-boot-starter'
-implementation 'io.k8swatcher:spring-k8swatcher:1.0.8'
+implementation 'io.k8swatcher:spring-k8swatcher:1.0.9'
 
 ```
 
@@ -63,7 +61,7 @@ Maven:
 <dependency>
   <groupId>io.k8swatcher</groupId>
   <artifactId>spring-k8swatcher</artifactId>
-  <version>1.0.8</version>
+  <version>1.0.9</version>
   <exclusions>
      <exclusion>
          <groupId>io.fabric8</groupId>
@@ -77,7 +75,7 @@ Maven:
 Gradle:
 
 ```
-implementation ('io.k8swatcher:spring-k8swatcher:1.0.8'){
+implementation ('io.k8swatcher:spring-k8swatcher:1.0.9'){
     exclude group: 'io.fabric8', module: 'kubernetes-client'
 }
 

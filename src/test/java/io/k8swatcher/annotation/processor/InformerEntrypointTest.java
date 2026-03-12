@@ -64,6 +64,7 @@ class InformerEntrypointTest {
 
         verify(validator).validateInformerAnnotations();
         verify(validator).validateWatchAnnotations();
+        verify(validator).validateHasConfigName();
     }
 
     @Test
@@ -91,6 +92,7 @@ class InformerEntrypointTest {
         InOrder inOrder = inOrder(validator, informerCreator, informer1);
         inOrder.verify(validator).validateInformerAnnotations();
         inOrder.verify(validator).validateWatchAnnotations();
+        inOrder.verify(validator).validateHasConfigName();
         inOrder.verify(informerCreator).createInformers();
         inOrder.verify(informer1).start();
     }
