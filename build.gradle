@@ -39,7 +39,7 @@ dependencyManagement {
 }
 
 ext{
-    fabric8Version = '7.6.1'
+    fabric8Version = '7.7.0'
 }
 
 dependencies {

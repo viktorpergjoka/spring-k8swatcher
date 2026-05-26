@@ -3,7 +3,7 @@ Spring-K8sWatcher
 [![Build](https://github.com/viktorpergjoka/spring-k8swatcher/actions/workflows/build.yml/badge.svg)](https://github.com/viktorpergjoka/spring-k8swatcher/actions/workflows/build.yml)
 [![Maven Central](https://img.shields.io/maven-central/v/io.k8swatcher/spring-k8swatcher?label=Maven%20Central)](https://central.sonatype.com/artifact/io.k8swatcher/spring-k8swatcher)
 
-![Fabric8](https://img.shields.io/badge/Fabric8-7.4.0-blue?logo=kubernetes)
+![Fabric8](https://img.shields.io/badge/Fabric8-7.7.0-blue?logo=kubernetes)
 
 Spring-K8sWatcher is a lightweight Spring Boot library for watching Kubernetes resource events. It wraps the Fabric8 Kubernetes Client Informer API behind simple annotations — no boilerplate needed.
 
