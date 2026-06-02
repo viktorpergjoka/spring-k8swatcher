@@ -1,5 +1,10 @@
 ## CHANGELOG
 
+### 1.0.9 
+
+* Fix #33: Dependency update
+
+
 ### 1.0.8 (2025-11-02)
 
 #### Dependency Upgrade

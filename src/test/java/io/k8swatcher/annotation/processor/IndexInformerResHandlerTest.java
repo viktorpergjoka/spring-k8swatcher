@@ -96,6 +96,20 @@ class IndexInformerResHandlerTest {
     }
 
     @Test
+    void onDelete_withSingleParamHandlerOnly() throws NoSuchMethodException {
+        Method deleteSingle = TestBean.class.getMethod("onDeleteSingle", Namespace.class);
+        IndexInformerResHandler handler = new IndexInformerResHandler(ctx, List.of(deleteSingle), TestBean.class);
+
+        when(ctx.getBean(TestBean.class)).thenReturn(testBean);
+
+        Namespace ns = new Namespace();
+        handler.onDelete(ns, true);
+
+        verify(testBean, timeout(1_000).times(1)).onDeleteSingle(ns);
+        verify(testBean, never()).onDeleteWithFlag(any(), anyBoolean());
+    }
+
+    @Test
     void noMethodsForEvent() throws NoSuchMethodException {
         Method addOnly = TestBean.class.getMethod("onAdd", Namespace.class);
         IndexInformerResHandler handlerAddOnly = new IndexInformerResHandler(ctx, List.of(addOnly), TestBean.class);
